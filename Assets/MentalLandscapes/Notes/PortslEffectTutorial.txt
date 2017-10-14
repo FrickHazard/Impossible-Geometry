@@ -1,0 +1,8 @@
+
+Render "inside" of portal with another camera in a RenderTexture
+Make sure the projection matrix of that camera "cuts" whatever is behind the portal in the inside room ( Oblique Near Plane Clipping )
+(VR) Render it again for the other eye
+Draw the portal as a flat plane when you are away from it and use the RenderTexture in screenspace to draw the inside of the portal
+If you touch the portal, it becomes an open box as you step inside it. You are literally stepping INSIDE it.
+If you get out of the portal on the other side, flip the portal. Make it a plane again. Flip the camera settings with the ones from "inside" (skybox, layermask, etc.)
+If you come out of the portal same way you went in, turn it back into a flat plane
