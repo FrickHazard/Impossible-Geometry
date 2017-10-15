@@ -34,17 +34,18 @@ public class ImpossibleSegmentRenderer : MonoBehaviour {
             Quaternion lookRotation = Quaternion.LookRotation(forward);
             Vector3 up = lookRotation * -Vector3.up;
             Vector3 right = lookRotation * -Vector3.right;
+            Vector3 cornerBuffer = forward;
             
             //  Vector3 up = Vector3.Cross(forward, right);
             mesh.SetVertices(new List<Vector3>(){
-                StartPoint + up + right,
-                StartPoint + -up + right,
-                StartPoint + up + -right,
-                StartPoint + -up + -right,
-                EndPoint + up + right,
-                EndPoint + -up + right,
-                EndPoint + up + -right,
-                EndPoint + -up + -right,
+                StartPoint + up + right + -cornerBuffer,
+                StartPoint + -up + right + -cornerBuffer,
+                StartPoint + up + -right + -cornerBuffer,
+                StartPoint + -up + -right + -cornerBuffer,
+                EndPoint + up + right + cornerBuffer,
+                EndPoint + -up + right + cornerBuffer,
+                EndPoint + up + -right + cornerBuffer,
+                EndPoint + -up + -right + cornerBuffer,
             });
             mesh.SetTriangles(new List<int>(){
                 2, 1, 0,
