@@ -198,7 +198,6 @@ public class Penrose : MonoBehaviour {
         points[3] += vector4;
         var vector5 = Vector3.Project((Camera.main.worldToCameraMatrix.MultiplyPoint(stairCasedPoints[4]) - points[4]), -Vector3.forward);
         points[4] += vector4;
-
     }
 
 }

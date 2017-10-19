@@ -8,17 +8,19 @@ public enum ImpossibleSegementType {
 };
 
 
-public class ImpossibleSegement {
+public class ImpossibleSegment {
 
     public Vector3 Start;
 
     public Vector3 End;
 
-    public ImpossibleSegement StartSegment = null;
+    public ImpossibleSegment StartSegment = null;
 
-    public ImpossibleSegement EndSegment = null;
+    public ImpossibleSegment EndSegment = null;
 
-    public ImpossibleSegement(Vector3 start, Vector3 end)
+    public ImpossibleSegementType SegmentType = ImpossibleSegementType.Caster;
+
+    public ImpossibleSegment(Vector3 start, Vector3 end)
     {
         Start = start;
         End = end;

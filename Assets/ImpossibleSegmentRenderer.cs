@@ -15,7 +15,7 @@ public class ImpossibleSegmentRenderer : MonoBehaviour {
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
     private Mesh mesh;
-    private ImpossibleSegement segment;
+    private ImpossibleSegment segment;
 
     void Start () {
         mesh = new Mesh();
@@ -35,8 +35,6 @@ public class ImpossibleSegmentRenderer : MonoBehaviour {
             Vector3 up = lookRotation * -Vector3.up;
             Vector3 right = lookRotation * -Vector3.right;
             Vector3 cornerBuffer = forward;
-            
-            //  Vector3 up = Vector3.Cross(forward, right);
             mesh.SetVertices(new List<Vector3>(){
                 StartPoint + up + right + -cornerBuffer,
                 StartPoint + -up + right + -cornerBuffer,
@@ -70,7 +68,6 @@ public class ImpossibleSegmentRenderer : MonoBehaviour {
             {
                 meshRenderer.sharedMaterial = CastMaterial;
             }
-           
         }
     }
 
