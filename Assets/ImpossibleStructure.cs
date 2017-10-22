@@ -59,14 +59,20 @@ public class ImpossibleStructure {
             points[points.Count - 1] = new Vector3(intersection.x, intersection.y, -1);
             List<Vector3> projectedPoints = ProjectPointsOnToScreenPlane(camera, points);
             List<Vector3> resultPoints = ReProjectPoints(projectedPoints, points);
+            resultPoints = resultPoints.Select(point => camera.cameraToWorldMatrix.MultiplyPoint(point)).ToList();
             List<ImpossibleSegment> result = new List<ImpossibleSegment>();
-            for (int i = 0; i < resultPoints.Count -2; i++)
+            for (int i = 0; i < resultPoints.Count -1; i++)
             {
                 result.Add(new ImpossibleSegment(resultPoints[i], resultPoints[i + 1]));
             }
             return result;
         }
         Debug.LogError("Structure had less than 2 segments");
+        return ImpossibleSegments;
+    }
+
+    public List<ImpossibleSegment> GetSegments()
+    {
         return ImpossibleSegments;
     }
 
