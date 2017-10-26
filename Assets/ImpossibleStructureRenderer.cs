@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ImpossibleStructureRenderer : MonoBehaviour {
 
+    public bool ShowOriginal;
     public ImpossibleStructure structure;
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
@@ -21,18 +22,27 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 	
 	
 	void Update () {
-        
-
+        BuildImpossibleStructure();
     }
 
     private void BuildImpossibleStructure()
     {
-        var structureResult = structure.ProjectResult(Camera.main);
+        List<ImpossibleSegment> structureResult;
+        if (ShowOriginal) structureResult = structure.GetSegments();
+        else structureResult = structure.ProjectResult(Camera.main);
         List<CombineInstance> combineInstances = new List<CombineInstance>();
         foreach (ImpossibleSegment segment in structureResult)
         {
             CombineInstance instance = new CombineInstance();
             instance.mesh = BuildImpossibleSegmentMesh(segment);
+            instance.transform = Matrix4x4.identity;
+            combineInstances.Add(instance);
+        }
+        for (int i = 0; i < structureResult.Count; i++)
+        {
+            var segment = structureResult[i];
+            CombineInstance instance = new CombineInstance();
+            instance.mesh = BuildImpossibleCorner(segment);
             instance.transform = Matrix4x4.identity;
             combineInstances.Add(instance);
         }
@@ -75,5 +85,42 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         return mesh;
     }
 
+    private Mesh BuildImpossibleCorner(ImpossibleSegment segment)
+    {
+            var mesh = new Mesh();
+            mesh.Clear();
+            Vector3 point = segment.Start;
+            Vector3 forward = Vector3.Normalize(segment.End - segment.Start);
+            Quaternion lookRotation = Quaternion.LookRotation(forward);
+            Vector3 up = (lookRotation * Vector3.up);
+            Vector3 right = (lookRotation * Vector3.right);
+
+            //  Vector3 up = Vector3.Cross(forward, right);
+            mesh.SetVertices(new List<Vector3>(){
+                point + up + right + (-forward),
+                point + -up + right + (-forward),
+                point + up + -right + (-forward),
+                point + -up + -right + (-forward),
+                point + up + right + (forward),
+                point + -up + right + (forward),
+                point + up + -right + (forward),
+                point + -up + -right + (forward),
+            });
+            mesh.SetTriangles(new List<int>(){
+                0, 1, 2,
+                1, 3, 2,
+                6, 5, 4,
+                6, 7, 5,
+                4, 1, 0,
+                1, 4, 5,
+                2, 3, 6,
+                6, 3, 7,
+                0, 2, 4,
+                2, 6, 4,
+                5, 3, 1,
+                3, 5, 7,
+            }, 0);
+            return mesh;
+    }
 }
 

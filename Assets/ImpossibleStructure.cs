@@ -21,6 +21,20 @@ public class ImpossibleStructure {
         return result;
     }
 
+    private List<Vector3> GetWorldPoints()
+    {
+        var result = new List<Vector3>();
+        for (int i = 0; i < ImpossibleSegments.Count; i++)
+        {
+            result.Add(ImpossibleSegments[i].Start);
+        }
+        if (ImpossibleSegments.Count > 0)
+        {
+            result.Add(ImpossibleSegments[ImpossibleSegments.Count - 1].End);
+        }
+        return result;
+    }
+
     public void AddSegment(Vector3 point)
     {
         if (ImpossibleSegments.Count == 0)
@@ -58,7 +72,7 @@ public class ImpossibleStructure {
             points[0] = new Vector3(intersection.x, intersection.y, -1);
             points[points.Count - 1] = new Vector3(intersection.x, intersection.y, -1);
             List<Vector3> projectedPoints = ProjectPointsOnToScreenPlane(camera, points);
-            List<Vector3> resultPoints = ReProjectPoints(projectedPoints, points);
+            List<Vector3> resultPoints = ReProjectPoints(camera, projectedPoints, GetWorldPoints());
             resultPoints = resultPoints.Select(point => camera.cameraToWorldMatrix.MultiplyPoint(point)).ToList();
             List<ImpossibleSegment> result = new List<ImpossibleSegment>();
             for (int i = 0; i < resultPoints.Count -1; i++)
@@ -96,12 +110,12 @@ public class ImpossibleStructure {
         return result;
     }
 
-    List<Vector3> ReProjectPoints(List<Vector3> projectedPoints, List<Vector3> origonalPoints)
+    List<Vector3> ReProjectPoints(Camera camera, List<Vector3> projectedPoints, List<Vector3> origonalPoints)
     {
         List<Vector3> result = new List<Vector3>();
         for (int i = 0; i < projectedPoints.Count; i++)
         {
-            var vector = Vector3.Project((Camera.main.worldToCameraMatrix.MultiplyPoint(origonalPoints[i]) - projectedPoints[i]), -Vector3.forward);
+            var vector = Vector3.Project((camera.worldToCameraMatrix.MultiplyPoint(origonalPoints[i]) - projectedPoints[i]), -Vector3.forward);
             result.Add(projectedPoints[i] += vector);
         }
         return result;
