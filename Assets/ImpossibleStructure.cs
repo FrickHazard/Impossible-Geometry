@@ -110,7 +110,7 @@ public class ImpossibleStructure {
         return result;
     }
 
-    List<Vector3> ReProjectPoints(Camera camera, List<Vector3> projectedPoints, List<Vector3> origonalPoints)
+    private List<Vector3> ReProjectPoints(Camera camera, List<Vector3> projectedPoints, List<Vector3> origonalPoints)
     {
         List<Vector3> result = new List<Vector3>();
         for (int i = 0; i < projectedPoints.Count; i++)

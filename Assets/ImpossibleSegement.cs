@@ -14,6 +14,8 @@ public class ImpossibleSegment {
 
     public Vector3 End;
 
+    public Vector3 Normal;
+
     public ImpossibleSegment StartSegment = null;
 
     public ImpossibleSegment EndSegment = null;
@@ -24,11 +26,6 @@ public class ImpossibleSegment {
     {
         Start = start;
         End = end;
-    }
-
-    public void CastInterection(Camera camera)
-    {
-        
     }
 
 }
