@@ -35,12 +35,12 @@ public class ImpossibleStructure {
         return result;
     }
 
-    public void AddSegment(Vector3 point)
+    public void AddSegment(Vector3 point, Vector3 normal)
     {
         if (ImpossibleSegments.Count == 0)
         {
             // if first start at zero
-            ImpossibleSegments.Add(new ImpossibleSegment(Vector3.zero, point));
+            ImpossibleSegments.Add(new ImpossibleSegment(Vector3.zero, point, normal));
         }
         else
         {
@@ -49,7 +49,7 @@ public class ImpossibleStructure {
                 // if more than 
                 ImpossibleSegments[ImpossibleSegments.Count - 1].SegmentType = ImpossibleSegementType.Spacer;
             }
-            ImpossibleSegments.Add(new ImpossibleSegment(ImpossibleSegments[ImpossibleSegments.Count - 1].End, point));
+            ImpossibleSegments.Add(new ImpossibleSegment(ImpossibleSegments[ImpossibleSegments.Count - 1].End, point, normal));
         }
     }
 
@@ -77,7 +77,7 @@ public class ImpossibleStructure {
             List<ImpossibleSegment> result = new List<ImpossibleSegment>();
             for (int i = 0; i < resultPoints.Count -1; i++)
             {
-                result.Add(new ImpossibleSegment(resultPoints[i], resultPoints[i + 1]));
+                result.Add(new ImpossibleSegment(resultPoints[i], resultPoints[i + 1], ImpossibleSegments[i].Normal));
             }
             return result;
         }

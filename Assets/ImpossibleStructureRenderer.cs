@@ -14,9 +14,9 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
         structure = new ImpossibleStructure();
-        structure.AddSegment(new Vector3(0, 10, 0));
-        structure.AddSegment(new Vector3(0, 10, 10));
-        structure.AddSegment(new Vector3(10, 10, 10));
+        structure.AddSegment(new Vector3(0, 10, 0), Vector3.right);
+        structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
+        structure.AddSegment(new Vector3(10, 10, 10), Vector3.forward);
         BuildImpossibleStructure();
     }
 	
@@ -55,8 +55,8 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         mesh.Clear();
         Vector3 forward = -Vector3.Normalize(segment.End - segment.Start);
         Quaternion lookRotation = Quaternion.LookRotation(forward);
-        Vector3 up = lookRotation * -Vector3.up;
-        Vector3 right = lookRotation * -Vector3.right;
+        Vector3 up = segment.Normal;
+        Vector3 right = Vector3.Cross(up, forward);
         Vector3 cornerBuffer = forward;
         mesh.SetVertices(new List<Vector3>(){
             segment.Start+ up + right + -cornerBuffer,
