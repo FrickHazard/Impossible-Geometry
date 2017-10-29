@@ -54,7 +54,6 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         Mesh mesh = new Mesh();
         mesh.Clear();
         Vector3 forward = -Vector3.Normalize(segment.End - segment.Start);
-        Quaternion lookRotation = Quaternion.LookRotation(forward);
         Vector3 up = segment.Normal;
         Vector3 right = Vector3.Cross(up, forward);
         Vector3 cornerBuffer = forward;
@@ -91,12 +90,11 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             mesh.Clear();
             Vector3 point = segment.Start;
             Vector3 forward = Vector3.Normalize(segment.End - segment.Start);
-            Quaternion lookRotation = Quaternion.LookRotation(forward);
-            Vector3 up = (lookRotation * Vector3.up);
-            Vector3 right = (lookRotation * Vector3.right);
+            Vector3 up = segment.Normal;
+            Vector3 right = Vector3.Cross(up, forward);
 
-            //  Vector3 up = Vector3.Cross(forward, right);
-            mesh.SetVertices(new List<Vector3>(){
+        //  Vector3 up = Vector3.Cross(forward, right);
+        mesh.SetVertices(new List<Vector3>(){
                 point + up + right + (-forward),
                 point + -up + right + (-forward),
                 point + up + -right + (-forward),
