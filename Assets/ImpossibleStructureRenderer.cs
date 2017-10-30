@@ -81,6 +81,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
+        ColorizeMesh(mesh);
         return mesh;
     }
 
@@ -118,7 +119,40 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 5, 3, 1,
                 3, 5, 7,
             }, 0);
+            ColorizeMesh(mesh);
             return mesh;
     }
+
+    private void ColorizeMesh(Mesh mesh)
+    {
+        //copy verts so each triangle has unique verts for coloring
+        var newVertices = new Vector3[mesh.triangles.Length];
+        var newTriangles = new int[mesh.triangles.Length];
+        // Rebuild mesh so that every triangle has unique vertices
+        for (var i = 0; i < mesh.triangles.Length; i++)
+        {
+            newVertices[i] = mesh.vertices[mesh.triangles[i]];
+            newTriangles[i] = i;
+        }
+        mesh.vertices = newVertices;
+        mesh.triangles = newTriangles;
+        Color[] colors = new Color[newVertices.Length];
+        Color triColor = new Color();
+        for (int i = 0; i < newTriangles.Length; i++)
+        {
+            int vertIndex = newTriangles[i];
+            if (i % 3 == 0)  {
+                //ends
+                if (i == 0 || i == 3 || i == 6 || i == 9) triColor = Color.red;
+                else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = Color.blue;
+                else if (i == 24 || i == 27 || i == 30 || i == 33) triColor = Color.green;
+                else if (i == 36 || i == 39 || i == 42 || i == 45) triColor = Color.cyan;
+                else triColor = Color.white;
+            }
+            colors[vertIndex] = triColor;
+        }
+        mesh.colors = colors;
+    }
+
 }
 
