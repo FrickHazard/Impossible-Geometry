@@ -20,7 +20,6 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         BuildImpossibleStructure();
     }
 	
-	
 	void Update () {
         BuildImpossibleStructure();
     }
@@ -143,10 +142,9 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             int vertIndex = newTriangles[i];
             if (i % 3 == 0)  {
                 //ends
-                if (i == 0 || i == 3 || i == 6 || i == 9) triColor = Color.red;
-                else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = Color.blue;
-                else if (i == 24 || i == 27 || i == 30 || i == 33) triColor = Color.green;
-                else if (i == 36 || i == 39 || i == 42 || i == 45) triColor = Color.cyan;
+                if (i == 0 || i == 3 || i == 6 || i == 9) triColor = Color.white;
+                else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = Color.white;
+                else if (i == 24 || i == 27 || i == 30 || i == 33) triColor = Color.blue;
                 else triColor = Color.white;
             }
             colors[vertIndex] = triColor;
