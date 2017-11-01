@@ -8,15 +8,18 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     public ImpossibleStructure structure;
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
+    private Color UpColor = Color.blue;
+    private Color RightColor = Color.red;
+    private Color FowardColor = Color.green;
 
     // Use this for initialization
     void Start () {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
         structure = new ImpossibleStructure();
-        structure.AddSegment(new Vector3(0, 10, 0), Vector3.right);
+        structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
-        structure.AddSegment(new Vector3(10, 10, 10), Vector3.forward);
+        structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
         BuildImpossibleStructure();
     }
 	
@@ -80,7 +83,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
-        ColorizeMesh(mesh);
+        ColorizeMesh(mesh, segment);
         return mesh;
     }
 
@@ -118,11 +121,11 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 5, 3, 1,
                 3, 5, 7,
             }, 0);
-            ColorizeMesh(mesh);
+            ColorizeMesh(mesh, segment);
             return mesh;
     }
 
-    private void ColorizeMesh(Mesh mesh)
+    private void ColorizeMesh(Mesh mesh, ImpossibleSegment segment)
     {
         //copy verts so each triangle has unique verts for coloring
         var newVertices = new Vector3[mesh.triangles.Length];
@@ -141,15 +144,47 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         {
             int vertIndex = newTriangles[i];
             if (i % 3 == 0)  {
-                //ends
-                if (i == 0 || i == 3 || i == 6 || i == 9) triColor = Color.white;
-                else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = Color.white;
-                else if (i == 24 || i == 27 || i == 30 || i == 33) triColor = Color.blue;
+                // trianlges on normal direction
+                if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNormalColor(segment);
+                // ends
+                else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNextNormalColor(segment, 2);
+                // right of normal
+                else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 1);
                 else triColor = Color.white;
             }
             colors[vertIndex] = triColor;
         }
         mesh.colors = colors;
+    }
+
+    // get color for normals
+    private Color GetNormalColor(ImpossibleSegment segment)
+    {
+        if (segment.Normal == Vector3.forward) return FowardColor;
+        if (segment.Normal == Vector3.up) return UpColor;
+        if (segment.Normal == Vector3.right) return RightColor;
+        return Color.magenta;
+    }
+
+    // to switch sides
+    private Color GetNextNormalColor(ImpossibleSegment segment, int side)
+    {
+        if (segment.Normal == Vector3.forward)
+        {
+            if (side == 1) return RightColor;
+            else return UpColor;
+        }
+        if (segment.Normal == Vector3.right)
+        {
+            if (side == 1) return UpColor;
+            else return FowardColor;
+        }
+        if (segment.Normal == Vector3.up)
+        {
+            if (side == 1) return FowardColor;
+            else return RightColor;
+        }
+        return Color.magenta;
     }
 
 }
