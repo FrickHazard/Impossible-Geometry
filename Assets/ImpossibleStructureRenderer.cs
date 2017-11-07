@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ImpossibleStructureRenderer : MonoBehaviour {
-
     public bool ShowOriginal;
     public ImpossibleStructure structure;
     public GameObject prefab;
@@ -12,7 +11,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     private Color UpColor = Color.blue;
     private Color RightColor = Color.red;
     private Color FowardColor = Color.green;
-    private List<GameObject> ObjectPool = new List<GameObject>();
+    private List<MeshFilter> ObjectPool = new List<MeshFilter>();
 
     // Use this for initialization
     void Start () {
@@ -24,14 +23,14 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
         for (int i = 0; i < 6; i++)
         {
-            var prefabObject = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-            ObjectPool.Add(prefabObject);
+            GameObject prefabObject = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+            ObjectPool.Add(prefabObject.GetComponent<MeshFilter>());
         }
         BuildImpossibleStructure();
     }
 	
-	void Update () {
-        BuildImpossibleStructure();
+	void Update() {
+       BuildImpossibleStructure();
     }
 
     private void BuildImpossibleStructure()
@@ -39,35 +38,30 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         List<ImpossibleSegment> structureResult;
         if (ShowOriginal) structureResult = structure.GetSegments();
         else structureResult = structure.ProjectResult(Camera.main);
-        //List<CombineInstance> combineInstances = new List<CombineInstance>();
+        List<CombineInstance> combineInstances = new List<CombineInstance>();
         var count = 0;
         foreach (ImpossibleSegment segment in structureResult)
         {
-            // CombineInstance instance = new CombineInstance();
-           var mesh = BuildImpossibleSegmentMesh(segment);
-            // instance.transform = Matrix4x4.identity;
-            // combineInstances.Add(instance);
-            ObjectPool[count].GetComponent<MeshFilter>().mesh = mesh; 
-            count++;
+            CombineInstance instance = new CombineInstance();
+            var mesh = BuildImpossibleSegmentMesh(segment);
+            ObjectPool[count].mesh = mesh;
+            count += 1;
         }
         count = 0;
         for (int i = 0; i < structureResult.Count; i++)
         {
             var segment = structureResult[i];
-            //CombineInstance instance = new CombineInstance();
+            CombineInstance instance = new CombineInstance();
             var mesh = BuildImpossibleCorner(segment);
-            //instance.transform = Matrix4x4.identity;
-            //combineInstances.Add(instance);
-            ObjectPool[count+3].GetComponent<MeshFilter>().mesh = mesh;
+            ObjectPool[count + 3].mesh = mesh;
             count++;
         }
-        //filter.mesh.CombineMeshes(combineInstances.ToArray(), true);
     }
 
     private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment)
     {
         Mesh mesh = new Mesh();
-        mesh.Clear();
+        mesh.MarkDynamic();
         Vector3 forward = -Vector3.Normalize(segment.End - segment.Start);
         Vector3 up = segment.Normal;
         Vector3 right = Vector3.Cross(up, forward);
@@ -103,7 +97,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     private Mesh BuildImpossibleCorner(ImpossibleSegment segment)
     {
             var mesh = new Mesh();
-            mesh.Clear();
+            mesh.MarkDynamic();
             Vector3 point = segment.Start;
             Vector3 forward = Vector3.Normalize(segment.End - segment.Start);
             Vector3 up = segment.Normal;
