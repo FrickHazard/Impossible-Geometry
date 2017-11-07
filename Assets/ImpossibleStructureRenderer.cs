@@ -6,11 +6,13 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
     public bool ShowOriginal;
     public ImpossibleStructure structure;
+    public GameObject prefab;
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
     private Color UpColor = Color.blue;
     private Color RightColor = Color.red;
     private Color FowardColor = Color.green;
+    private List<GameObject> ObjectPool = new List<GameObject>();
 
     // Use this for initialization
     void Start () {
@@ -20,6 +22,11 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
         structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
+        for (int i = 0; i < 6; i++)
+        {
+            var prefabObject = Instantiate(prefab, Vector3.zero, Quaternion.identity);
+            ObjectPool.Add(prefabObject);
+        }
         BuildImpossibleStructure();
     }
 	
@@ -32,23 +39,29 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         List<ImpossibleSegment> structureResult;
         if (ShowOriginal) structureResult = structure.GetSegments();
         else structureResult = structure.ProjectResult(Camera.main);
-        List<CombineInstance> combineInstances = new List<CombineInstance>();
+        //List<CombineInstance> combineInstances = new List<CombineInstance>();
+        var count = 0;
         foreach (ImpossibleSegment segment in structureResult)
         {
-            CombineInstance instance = new CombineInstance();
-            instance.mesh = BuildImpossibleSegmentMesh(segment);
-            instance.transform = Matrix4x4.identity;
-            combineInstances.Add(instance);
+            // CombineInstance instance = new CombineInstance();
+           var mesh = BuildImpossibleSegmentMesh(segment);
+            // instance.transform = Matrix4x4.identity;
+            // combineInstances.Add(instance);
+            ObjectPool[count].GetComponent<MeshFilter>().mesh = mesh; 
+            count++;
         }
+        count = 0;
         for (int i = 0; i < structureResult.Count; i++)
         {
             var segment = structureResult[i];
-            CombineInstance instance = new CombineInstance();
-            instance.mesh = BuildImpossibleCorner(segment);
-            instance.transform = Matrix4x4.identity;
-            combineInstances.Add(instance);
+            //CombineInstance instance = new CombineInstance();
+            var mesh = BuildImpossibleCorner(segment);
+            //instance.transform = Matrix4x4.identity;
+            //combineInstances.Add(instance);
+            ObjectPool[count+3].GetComponent<MeshFilter>().mesh = mesh;
+            count++;
         }
-        filter.mesh.CombineMeshes(combineInstances.ToArray(), true);
+        //filter.mesh.CombineMeshes(combineInstances.ToArray(), true);
     }
 
     private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment)
