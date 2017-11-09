@@ -5,13 +5,16 @@ using UnityEngine;
 public class ImpossibleStructureRenderer : MonoBehaviour {
     public bool ShowOriginal;
     public ImpossibleStructure structure;
-    public GameObject prefab;
+    public StencilCast StencilCastPrefab;
+    public StencilEater StencilEaterPrefab;
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
     private Color UpColor = Color.blue;
     private Color RightColor = Color.red;
     private Color FowardColor = Color.green;
-    private List<MeshFilter> ObjectPool = new List<MeshFilter>();
+    private List<StencilEater> StencilEaterObjectPool = new List<StencilEater>();
+    private List<StencilCast> StencilCasterObjectPool = new List<StencilCast>();
+    private int ObjectPoolIndex = 0;
 
     // Use this for initialization
     void Start () {
@@ -21,12 +24,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
         structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
-        for (int i = 0; i < 6; i++)
-        {
-            GameObject prefabObject = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-            ObjectPool.Add(prefabObject.GetComponent<MeshFilter>());
-        }
-        BuildImpossibleStructure();
+        SetObjectPool(structure);
     }
 	
 	void Update() {
@@ -38,24 +36,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         List<ImpossibleSegment> structureResult;
         if (ShowOriginal) structureResult = structure.GetSegments();
         else structureResult = structure.ProjectResult(Camera.main);
-        List<CombineInstance> combineInstances = new List<CombineInstance>();
-        var count = 0;
+        ObjectPoolIndex = 0;
         foreach (ImpossibleSegment segment in structureResult)
         {
-            CombineInstance instance = new CombineInstance();
-            var mesh = BuildImpossibleSegmentMesh(segment);
-            ObjectPool[count].mesh = mesh;
-            count += 1;
+            BuildSegment(segment);
         }
-        count = 0;
-        for (int i = 0; i < structureResult.Count; i++)
-        {
-            var segment = structureResult[i];
-            CombineInstance instance = new CombineInstance();
-            var mesh = BuildImpossibleCorner(segment);
-            ObjectPool[count + 3].mesh = mesh;
-            count++;
-        }
+
     }
 
     private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment)
@@ -192,6 +178,32 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             else return RightColor;
         }
         return Color.magenta;
+    }
+
+    private void SetObjectPool(ImpossibleStructure structure)
+    {
+        // double to include corners, and double again for stencil buffer tests;
+        int count = structure.GetSegments().Count * 2;
+        for (int i = 0; i < count; i++)
+        {
+            StencilCast prefabObject1 = Instantiate(StencilCastPrefab, Vector3.zero, Quaternion.identity);
+            StencilEater prefabObject2 = Instantiate(StencilEaterPrefab, Vector3.zero, Quaternion.identity);
+            StencilCasterObjectPool.Add(prefabObject1);
+            StencilEaterObjectPool.Add(prefabObject2);
+        }
+    }
+
+    private void BuildSegment(ImpossibleSegment segment)
+    {
+         var segmentMesh = BuildImpossibleSegmentMesh(segment);
+         var cornerMesh = BuildImpossibleCorner(segment);
+         // buffer casters
+         StencilCasterObjectPool[ObjectPoolIndex].SetUpCast(segmentMesh, (ObjectPoolIndex/2));
+         StencilCasterObjectPool[ObjectPoolIndex + 1].SetUpCast(cornerMesh, (ObjectPoolIndex/2));
+        // actual material
+        StencilEaterObjectPool[ObjectPoolIndex].SetUpEat(segmentMesh, (ObjectPoolIndex/2) + 1);
+        StencilEaterObjectPool[ObjectPoolIndex + 1].SetUpEat(cornerMesh, (ObjectPoolIndex/2) + 1);
+        ObjectPoolIndex += 2;
     }
 
 }
