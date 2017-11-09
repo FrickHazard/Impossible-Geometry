@@ -11,11 +11,11 @@
 			Ref[_StencilMask]
 			Comp Greater
 			Pass Keep
+			ZFail Keep
 		}
-		Tags{ "Queue" = "Geometry" }
+		Tags{ "Queue" = "Geometry+1"  }
 		Pass
 		{
-			ZTest Always
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag

@@ -12,10 +12,10 @@ Shader "Unlit/StencilOrder"
 			Ref[_StencilMask]
 			Comp Always
 			Pass Replace
+			ZFail Replace
 		}
-		Tags { "Queue" = "Geometry-1" "LightMode" = "Always" }
+		Tags { "Queue" = "Geometry" }
 		Pass {
-			ZTest Always
 			ZWrite Off
 			Blend SrcAlpha OneMinusSrcAlpha // use alpha blending
 
