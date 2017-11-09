@@ -13,27 +13,26 @@ Shader "Unlit/StencilOrder"
 			Comp Always
 			Pass Replace
 		}
-		Tags{ "Queue" = "Transparent-1" "LightMode" = "Always" }
-		Pass{
-		ZWrite Off 
-		Blend SrcAlpha OneMinusSrcAlpha // use alpha blending
+		Tags { "Queue" = "Geometry-1" "LightMode" = "Always" }
+		Pass {
+			ZTest Always
+			ZWrite Off
+			Blend SrcAlpha OneMinusSrcAlpha // use alpha blending
 
-        CGPROGRAM
+			CGPROGRAM
 
-        #pragma vertex vert 
-		#pragma fragment frag
+			#pragma vertex vert 
+			#pragma fragment frag
 
-			float4 vert(float4 vertexPos : POSITION) : SV_POSITION
-			{
-				return UnityObjectToClipPos(vertexPos);
-			}
+				float4 vert(float4 vertexPos : POSITION) : SV_POSITION
+				{
+					return UnityObjectToClipPos(vertexPos);
+				}
 
-			float4 frag(void) : COLOR
-			{
-				return float4(0.0, 0.0, 0.0, 0.0);
-			// the fourth component (alpha) is important: 
-			// this is semitransparent green
-			}
+				float4 frag(void) : COLOR
+				{
+					return float4(0.0, 0.0, 0.0, 0.0);
+				}
 
 			ENDCG
 		}
