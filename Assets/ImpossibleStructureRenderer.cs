@@ -77,6 +77,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 7, 5, 3,
             }, 0);
         ColorizeMesh(mesh, segment);
+        mesh.RecalculateBounds();
         return mesh;
     }
 
@@ -115,6 +116,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 3, 5, 7,
             }, 0);
             ColorizeMesh(mesh, segment);
+            mesh.RecalculateBounds();
             return mesh;
     }
 

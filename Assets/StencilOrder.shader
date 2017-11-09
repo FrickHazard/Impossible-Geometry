@@ -10,7 +10,7 @@ Shader "Unlit/StencilOrder"
 		Stencil
 		{
 			Ref[_StencilMask]
-			Comp Always
+			Comp Greater
 			Pass Replace
 			ZFail Replace
 		}

@@ -13,7 +13,7 @@
 			Pass Keep
 			ZFail Keep
 		}
-		Tags{ "Queue" = "Geometry+1"  }
+		Tags{ "Queue" = "Transparent+1"  }
 		Pass
 		{
 			CGPROGRAM
