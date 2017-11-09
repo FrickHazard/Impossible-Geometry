@@ -1,32 +1,27 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
+﻿
 Shader "Unlit/StencilOrder"
 {
 	Properties
 	{
 		_StencilMask("Stencil Mask", Int) = 1
 	}
-		SubShader{
+	SubShader 
+	{
 		Stencil
 		{
 			Ref[_StencilMask]
 			Comp Always
 			Pass Replace
 		}
-			Tags{ "Queue" = "Geometry-1" }
-			// draw after all opaque geometry has been drawn
-			Pass{
-			ZWrite Off // don't write to depth buffer 
-					   // in order not to occlude other objects
+		Tags{ "Queue" = "Transparent-1" "LightMode" = "Always" }
+		Pass{
+		ZWrite Off 
+		Blend SrcAlpha OneMinusSrcAlpha // use alpha blending
 
-			Blend SrcAlpha OneMinusSrcAlpha // use alpha blending
+        CGPROGRAM
 
-			CGPROGRAM
-
-#pragma vertex vert 
-#pragma fragment frag
+        #pragma vertex vert 
+		#pragma fragment frag
 
 			float4 vert(float4 vertexPos : POSITION) : SV_POSITION
 			{
@@ -42,5 +37,5 @@ Shader "Unlit/StencilOrder"
 
 			ENDCG
 		}
-		}
 	}
+}

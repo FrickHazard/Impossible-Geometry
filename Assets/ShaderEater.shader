@@ -12,15 +12,11 @@
 			Comp Greater
 			Pass Keep
 		}
-		Tags{ "RenderType" = "Transparent" }
-		LOD 100
+		Tags{ "Queue" = "Transparent" "RenderType" = "Transparent" }
 
 		Pass
 	{
-		ZWrite Off // don't write to depth buffer 
-				   // in order not to occlude other objects
-
-		Blend SrcAlpha OneMinusSrcAlpha // use alpha blending
+		ZWrite Off
 		CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag

@@ -197,12 +197,13 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     {
          var segmentMesh = BuildImpossibleSegmentMesh(segment);
          var cornerMesh = BuildImpossibleCorner(segment);
+         int order = (ObjectPoolIndex / 2);
          // buffer casters
-         StencilCasterObjectPool[ObjectPoolIndex].SetUpCast(segmentMesh, (ObjectPoolIndex/2));
-         StencilCasterObjectPool[ObjectPoolIndex + 1].SetUpCast(cornerMesh, (ObjectPoolIndex/2));
+         StencilCasterObjectPool[ObjectPoolIndex].SetUpCast(segmentMesh, order);
+        // StencilCasterObjectPool[ObjectPoolIndex + 1].SetUpCast(cornerMesh, order);
         // actual material
-        StencilEaterObjectPool[ObjectPoolIndex].SetUpEat(segmentMesh, (ObjectPoolIndex/2) + 1);
-        StencilEaterObjectPool[ObjectPoolIndex + 1].SetUpEat(cornerMesh, (ObjectPoolIndex/2) + 1);
+        StencilEaterObjectPool[ObjectPoolIndex].SetUpEat(segmentMesh, order + 1);
+        // StencilEaterObjectPool[ObjectPoolIndex + 1].SetUpEat(cornerMesh, order + 1);
         ObjectPoolIndex += 2;
     }
 
