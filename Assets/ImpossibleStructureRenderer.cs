@@ -214,12 +214,13 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         {
             order = 2;
         }
-        // buffer casters
+        // buffer writers
         StencilWriterObjectPool[ObjectPoolIndex].SetUpWrite(segmentMesh, order);
         StencilWriterObjectPool[ObjectPoolIndex + 1].SetUpWrite(cornerMesh, order);
-        // actual material
+        // actual material buffer eater
         StencilReaderObjectPool[ObjectPoolIndex].SetUpRead(segmentMesh, order + 1);
         StencilReaderObjectPool[ObjectPoolIndex + 1].SetUpRead(cornerMesh, order + 1);
+        // clear buffer on spacer for
         if (segment.SegmentType == ImpossibleSegementType.Spacer)
         {
             StencilClearerObjectPool[ObjectPoolIndex].SetUpClearer(segmentMesh, 3);
