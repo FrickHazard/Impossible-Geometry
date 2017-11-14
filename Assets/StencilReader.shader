@@ -1,4 +1,4 @@
-﻿Shader "Unlit/StencilEater"
+﻿Shader "Unlit/Impossible/StencilReader"
 {
 	Properties
 	{
@@ -13,7 +13,7 @@
 			Pass Keep
 			ZFail Keep
 		}
-		Tags{ "Queue" = "Transparent+1"  }
+		Tags{ "Queue" = "Geometry+2"  }
 		Pass
 		{
 			CGPROGRAM

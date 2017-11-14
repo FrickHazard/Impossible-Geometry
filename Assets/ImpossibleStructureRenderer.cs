@@ -5,15 +5,17 @@ using UnityEngine;
 public class ImpossibleStructureRenderer : MonoBehaviour {
     public bool ShowOriginal;
     public ImpossibleStructure structure;
-    public StencilCast StencilCastPrefab;
-    public StencilEater StencilEaterPrefab;
+    public StencilWriter StencilWriterPrefab;
+    public StencilReader StencilReaderPrefab;
+    public StencilClearer StencilClearerPrefab;
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
     private Color UpColor = Color.blue;
     private Color RightColor = Color.red;
     private Color FowardColor = Color.green;
-    private List<StencilEater> StencilEaterObjectPool = new List<StencilEater>();
-    private List<StencilCast> StencilCasterObjectPool = new List<StencilCast>();
+    private List<StencilReader> StencilReaderObjectPool = new List<StencilReader>();
+    private List<StencilWriter> StencilWriterObjectPool = new List<StencilWriter>();
+    private List<StencilClearer> StencilClearerObjectPool = new List<StencilClearer>();
     private int ObjectPoolIndex = 0;
 
     // Use this for initialization
@@ -188,10 +190,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         int count = structure.GetSegments().Count * 2;
         for (int i = 0; i < count; i++)
         {
-            StencilCast prefabObject1 = Instantiate(StencilCastPrefab, Vector3.zero, Quaternion.identity);
-            StencilEater prefabObject2 = Instantiate(StencilEaterPrefab, Vector3.zero, Quaternion.identity);
-            StencilCasterObjectPool.Add(prefabObject1);
-            StencilEaterObjectPool.Add(prefabObject2);
+            StencilWriter prefabObject1 = Instantiate(StencilWriterPrefab, Vector3.zero, Quaternion.identity);
+            StencilReader prefabObject2 = Instantiate(StencilReaderPrefab, Vector3.zero, Quaternion.identity);
+            StencilClearer prefabObject3 = Instantiate(StencilClearerPrefab, Vector3.zero, Quaternion.identity);
+            StencilWriterObjectPool.Add(prefabObject1);
+            StencilReaderObjectPool.Add(prefabObject2);
+            StencilClearerObjectPool.Add(prefabObject3);
         }
     }
 
@@ -199,13 +203,27 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     {
          var segmentMesh = BuildImpossibleSegmentMesh(segment);
          var cornerMesh = BuildImpossibleCorner(segment);
-         int order = (ObjectPoolIndex / 2);
-         // buffer casters
-         StencilCasterObjectPool[ObjectPoolIndex].SetUpCast(segmentMesh, order);
-        // StencilCasterObjectPool[ObjectPoolIndex + 1].SetUpCast(cornerMesh, order);
+         int order = 1;
+
+        if (segment.SegmentType == ImpossibleSegementType.Caster)
+        {
+            order = 3;
+        }
+
+        if (segment.SegmentType == ImpossibleSegementType.Eater)
+        {
+            order = 2;
+        }
+        // buffer casters
+        StencilWriterObjectPool[ObjectPoolIndex].SetUpWrite(segmentMesh, order);
+        StencilWriterObjectPool[ObjectPoolIndex + 1].SetUpWrite(cornerMesh, order);
         // actual material
-        StencilEaterObjectPool[ObjectPoolIndex].SetUpEat(segmentMesh, order + 1);
-        // StencilEaterObjectPool[ObjectPoolIndex + 1].SetUpEat(cornerMesh, order + 1);
+        StencilReaderObjectPool[ObjectPoolIndex].SetUpRead(segmentMesh, order + 1);
+        StencilReaderObjectPool[ObjectPoolIndex + 1].SetUpRead(cornerMesh, order + 1);
+        if (segment.SegmentType == ImpossibleSegementType.Spacer)
+        {
+            StencilClearerObjectPool[ObjectPoolIndex].SetUpClearer(segmentMesh, 3);
+        }
         ObjectPoolIndex += 2;
     }
 

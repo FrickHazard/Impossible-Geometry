@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StencilCast : MonoBehaviour {
+public class StencilWriter : MonoBehaviour {
 
     private MeshFilter filter;
     private MeshRenderer meshRenderer; 
@@ -13,7 +13,7 @@ public class StencilCast : MonoBehaviour {
         meshRenderer = GetComponent<MeshRenderer>();
     }
 
-    public void SetUpCast(Mesh mesh, int order)
+    public void SetUpWrite(Mesh mesh, int order)
     {
         filter.mesh = mesh;
         meshRenderer.material.SetInt("_StencilMask", order);

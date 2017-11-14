@@ -5,6 +5,7 @@ using UnityEngine;
 public enum ImpossibleSegementType {
     Spacer,
     Caster,
+    Eater,
 };
 
 

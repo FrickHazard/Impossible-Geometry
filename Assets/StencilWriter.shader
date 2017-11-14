@@ -1,5 +1,5 @@
 ﻿
-Shader "Unlit/StencilOrder"
+Shader "Unlit/Impossible/StencilWriterShader"
 {
 	Properties
 	{
