@@ -39,9 +39,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         if (ShowOriginal) structureResult = structure.GetSegments();
         else structureResult = structure.ProjectResult(Camera.main);
         ObjectPoolIndex = 0;
-        foreach (ImpossibleSegment segment in structureResult)
+        for(int i = 0; i < structureResult.Count; i++)
         {
-            BuildSegment(segment);
+            ImpossibleSegment next;
+            if(i < structureResult.Count-1) next = structureResult[i + 1];
+            else next = structureResult[0];
+            BuildSegment(structureResult[i], next);
         }
 
     }
@@ -78,18 +81,18 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
-        ColorizeMesh(mesh, segment);
+        ColorizeMesh(mesh, segment, false);
         mesh.RecalculateBounds();
         return mesh;
     }
 
-    private Mesh BuildImpossibleCorner(ImpossibleSegment segment)
+    private Mesh BuildImpossibleCorner(ImpossibleSegment segment, ImpossibleSegment next)
     {
             var mesh = new Mesh();
             mesh.MarkDynamic();
-            Vector3 point = segment.Start;
-            Vector3 forward = Vector3.Normalize(segment.End - segment.Start);
-            Vector3 up = segment.Normal;
+            Vector3 point = next.End;
+            Vector3 forward = Vector3.Normalize(next.End - next.Start);
+            Vector3 up = next.Normal;
             Vector3 right = Vector3.Cross(up, forward);
 
         //  Vector3 up = Vector3.Cross(forward, right);
@@ -117,12 +120,51 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 5, 3, 1,
                 3, 5, 7,
             }, 0);
-            ColorizeMesh(mesh, segment);
+            ColorizeMesh(mesh, segment, true);
             mesh.RecalculateBounds();
             return mesh;
     }
 
-    private void ColorizeMesh(Mesh mesh, ImpossibleSegment segment)
+    private void ColorizeMesh(Mesh mesh, ImpossibleSegment segment, bool isCorner)
+    {
+        MakeMeshHaveUniqueVertsPerTriangle(mesh);
+        Color[] colors = new Color[mesh.vertices.Length];
+        Color triColor = new Color();
+        for (int i = 0; i < mesh.triangles.Length; i++)
+        {
+            int vertIndex = mesh.triangles[i];
+            if (!isCorner)
+            {
+                if (i % 3 == 0)
+                {
+                    // trianlges on normal direction
+                    if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNormalColor(segment);
+                    // ends
+                    else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNextNormalColor(segment, 2);
+                    // right of normal
+                    else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 1);
+                    else triColor = Color.white;
+                }
+            }
+            else
+            {
+                if (i % 3 == 0)
+                {
+                    // trianlges on normal direction
+                    if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNextNormalColor(segment, 1);
+                    // ends
+                    else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNormalColor(segment);
+                    // right of normal
+                    else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 2);
+                    else triColor = Color.white;
+                }
+            }
+            colors[vertIndex] = triColor;
+        }
+        mesh.colors = colors;
+    }
+
+    private void MakeMeshHaveUniqueVertsPerTriangle(Mesh mesh)
     {
         //copy verts so each triangle has unique verts for coloring
         var newVertices = new Vector3[mesh.triangles.Length];
@@ -135,23 +177,6 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         }
         mesh.vertices = newVertices;
         mesh.triangles = newTriangles;
-        Color[] colors = new Color[newVertices.Length];
-        Color triColor = new Color();
-        for (int i = 0; i < newTriangles.Length; i++)
-        {
-            int vertIndex = newTriangles[i];
-            if (i % 3 == 0)  {
-                // trianlges on normal direction
-                if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNormalColor(segment);
-                // ends
-                else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNextNormalColor(segment, 2);
-                // right of normal
-                else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 1);
-                else triColor = Color.white;
-            }
-            colors[vertIndex] = triColor;
-        }
-        mesh.colors = colors;
     }
 
     // get color for normals
@@ -199,11 +224,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         }
     }
 
-    private void BuildSegment(ImpossibleSegment segment)
+    private void BuildSegment(ImpossibleSegment segment, ImpossibleSegment next)
     {
          var segmentMesh = BuildImpossibleSegmentMesh(segment);
-         var cornerMesh = BuildImpossibleCorner(segment);
+         var cornerMesh = BuildImpossibleCorner(segment, next);
          int order = 1;
+         int cornerOrder = 1;   
 
         if (segment.SegmentType == ImpossibleSegementType.Caster)
         {
@@ -214,16 +240,29 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         {
             order = 2;
         }
+        if (next.SegmentType == ImpossibleSegementType.Caster)
+        {
+            cornerOrder = 3;
+        }
+
+        if (next.SegmentType == ImpossibleSegementType.Eater)
+        {
+            cornerOrder = 2;
+        }
         // buffer writers
         StencilWriterObjectPool[ObjectPoolIndex].SetUpWrite(segmentMesh, order);
-        StencilWriterObjectPool[ObjectPoolIndex + 1].SetUpWrite(cornerMesh, order);
+        StencilWriterObjectPool[ObjectPoolIndex + 1].SetUpWrite(cornerMesh, cornerOrder);
         // actual material buffer eater
         StencilReaderObjectPool[ObjectPoolIndex].SetUpRead(segmentMesh, order + 1);
-        StencilReaderObjectPool[ObjectPoolIndex + 1].SetUpRead(cornerMesh, order + 1);
+        StencilReaderObjectPool[ObjectPoolIndex + 1].SetUpRead(cornerMesh, cornerOrder + 1);
         // clear buffer on spacer for
         if (segment.SegmentType == ImpossibleSegementType.Spacer)
         {
             StencilClearerObjectPool[ObjectPoolIndex].SetUpClearer(segmentMesh, 3);
+        }
+        if (next.SegmentType == ImpossibleSegementType.Spacer)
+        {
+            StencilClearerObjectPool[ObjectPoolIndex + 1].SetUpClearer(cornerMesh, 3);
         }
         ObjectPoolIndex += 2;
     }
