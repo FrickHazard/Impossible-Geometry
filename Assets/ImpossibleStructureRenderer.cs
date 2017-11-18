@@ -90,35 +90,46 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     {
             var mesh = new Mesh();
             mesh.MarkDynamic();
-            Vector3 point = next.End;
-            Vector3 forward = Vector3.Normalize(next.End - next.Start);
-            Vector3 up = next.Normal;
-            Vector3 right = Vector3.Cross(up, forward);
+            Vector3 point = segment.End;
+            Vector3 forwardSegment1 = Vector3.Normalize(segment.End - segment.Start);
+            Vector3 forwardSegment2 = Vector3.Normalize(next.End - next.Start);
+            Vector3 upSegment1 = segment.Normal;
+            Vector3 upSegment2 = next.Normal;
+            Vector3 rightSegment1 = Vector3.Cross(upSegment1, forwardSegment1);
+            Vector3 rightSegment2 = Vector3.Cross(upSegment2, forwardSegment2);
+
+
+            Vector3 segment1LeftCornerPoint = point + -forwardSegment1 + -upSegment1;
+            Vector3 segment2RightCornerPoint = point + forwardSegment2 + -rightSegment2;
+            Vector3 segmentLowPoint = point + -forwardSegment1 + forwardSegment2;
+            Vector3 segmentHighPoint = point + forwardSegment1 + -forwardSegment2;
+            Vector3 averageDepth = -upSegment2;
 
         //  Vector3 up = Vector3.Cross(forward, right);
         mesh.SetVertices(new List<Vector3>(){
-                point + up + right + (-forward),
-                point + -up + right + (-forward),
-                point + up + -right + (-forward),
-                point + -up + -right + (-forward),
-                point + up + right + (forward),
-                point + -up + right + (forward),
-                point + up + -right + (forward),
-                point + -up + -right + (forward),
+                // forward up right
+                segment2RightCornerPoint + -upSegment2,
+                segmentLowPoint + averageDepth,
+                segmentHighPoint + averageDepth,
+                segment1LeftCornerPoint + rightSegment1,
+                segment2RightCornerPoint + upSegment2,
+                segmentLowPoint - averageDepth,
+                segmentHighPoint - averageDepth,
+                segment1LeftCornerPoint - rightSegment1,
             });
             mesh.SetTriangles(new List<int>(){
-                0, 1, 2,
-                1, 3, 2,
-                6, 5, 4,
-                6, 7, 5,
-                4, 1, 0,
-                1, 4, 5,
-                2, 3, 6,
-                6, 3, 7,
-                0, 2, 4,
-                2, 6, 4,
-                5, 3, 1,
-                3, 5, 7,
+                2, 1, 0,
+                2, 3, 1,
+                4, 5, 6,
+                5, 7, 6,
+                0, 1, 4,
+                5, 4, 1,
+                6, 3, 2,
+                7, 3, 6,
+                4, 2, 0,
+                4, 6, 2,
+                1, 3, 5,
+                7, 5, 3,
             }, 0);
             ColorizeMesh(mesh, segment, true);
             mesh.RecalculateBounds();
@@ -151,11 +162,11 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 if (i % 3 == 0)
                 {
                     // trianlges on normal direction
-                    if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNextNormalColor(segment, 1);
+                    if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNextNormalColor(segment, 2);
                     // ends
-                    else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNormalColor(segment);
+                    else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNextNormalColor(segment, 1);
                     // right of normal
-                    else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 2);
+                    else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNormalColor(segment);
                     else triColor = Color.white;
                 }
             }
@@ -228,8 +239,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     {
          var segmentMesh = BuildImpossibleSegmentMesh(segment);
          var cornerMesh = BuildImpossibleCorner(segment, next);
-         int order = 1;
-         int cornerOrder = 1;   
+         int order = 1;  
 
         if (segment.SegmentType == ImpossibleSegementType.Caster)
         {
@@ -240,31 +250,19 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         {
             order = 2;
         }
-        if (next.SegmentType == ImpossibleSegementType.Caster)
-        {
-            cornerOrder = 3;
-        }
-
-        if (next.SegmentType == ImpossibleSegementType.Eater)
-        {
-            cornerOrder = 2;
-        }
         // buffer writers
         StencilWriterObjectPool[ObjectPoolIndex].SetUpWrite(segmentMesh, order);
-        StencilWriterObjectPool[ObjectPoolIndex + 1].SetUpWrite(cornerMesh, cornerOrder);
+        StencilWriterObjectPool[ObjectPoolIndex + 1].SetUpWrite(cornerMesh, order);
         // actual material buffer eater
         StencilReaderObjectPool[ObjectPoolIndex].SetUpRead(segmentMesh, order + 1);
-        StencilReaderObjectPool[ObjectPoolIndex + 1].SetUpRead(cornerMesh, cornerOrder + 1);
+        StencilReaderObjectPool[ObjectPoolIndex + 1].SetUpRead(cornerMesh, order + 1);
         // clear buffer on spacer for
         if (segment.SegmentType == ImpossibleSegementType.Spacer)
         {
             StencilClearerObjectPool[ObjectPoolIndex].SetUpClearer(segmentMesh, 3);
-        }
-        if (next.SegmentType == ImpossibleSegementType.Spacer)
-        {
             StencilClearerObjectPool[ObjectPoolIndex + 1].SetUpClearer(cornerMesh, 3);
         }
-        ObjectPoolIndex += 2;
+         ObjectPoolIndex += 2;
     }
 
 }
