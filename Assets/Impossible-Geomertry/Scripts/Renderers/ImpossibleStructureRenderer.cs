@@ -101,20 +101,21 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
             Vector3 segment1LeftCornerPoint = point + -forwardSegment1 + -upSegment1;
             Vector3 segment2RightCornerPoint = point + forwardSegment2 + -rightSegment2;
-            Vector3 segmentLowPoint = point + -forwardSegment1 + forwardSegment2;
-            Vector3 segmentHighPoint = point + forwardSegment1 + -forwardSegment2;
-            Vector3 averageDepth = -upSegment2;
+            Vector3 segment1RightCornerPoint = point + -forwardSegment1 + upSegment1;
+            Vector3 segmentLowPoint = point + -forwardSegment1 + upSegment1;
+            Vector3 segmentHighPoint = point + forwardSegment1 + -upSegment1;
 
-        //  Vector3 up = Vector3.Cross(forward, right);
+        // second number is depth
         mesh.SetVertices(new List<Vector3>(){
                 // forward up right
                 segment2RightCornerPoint + -upSegment2,
-                segmentLowPoint + averageDepth,
-                segmentHighPoint + averageDepth,
+                segment1RightCornerPoint + rightSegment1,
+                segmentHighPoint + rightSegment1,
                 segment1LeftCornerPoint + rightSegment1,
+
                 segment2RightCornerPoint + upSegment2,
-                segmentLowPoint - averageDepth,
-                segmentHighPoint - averageDepth,
+                segment1RightCornerPoint + -rightSegment1,
+                segmentHighPoint - rightSegment1,
                 segment1LeftCornerPoint - rightSegment1,
             });
             mesh.SetTriangles(new List<int>(){
@@ -131,6 +132,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
+  
             ColorizeMesh(mesh, segment, true);
             mesh.RecalculateBounds();
             return mesh;
