@@ -38,6 +38,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         List<ImpossibleSegment> structureResult;
         if (ShowOriginal) structureResult = structure.GetSegments();
         else structureResult = structure.ProjectResult(Camera.main);
+        if(structureResult == null) structureResult = structure.GetSegments();
         ObjectPoolIndex = 0;
         for(int i = 0; i < structureResult.Count; i++)
         {

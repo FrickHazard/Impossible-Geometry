@@ -66,8 +66,7 @@ public class ImpossibleStructure {
             Vector2? intersectionResult = Intersection(points[1], points[0], points[points.Count -2], points[points.Count - 1]);
             if (intersectionResult == null)
             {
-                Debug.LogError("Intersection was askew");
-                return ImpossibleSegments;
+                return null;
             }
             Vector2 intersection = (Vector2)intersectionResult;
             // intersection result 
@@ -96,11 +95,13 @@ public class ImpossibleStructure {
     // do ray based intersection
     private static Vector2? Intersection(Vector2 p1a, Vector2 p1b, Vector2 p2a, Vector2 p2b)
     {
+        // does rays intersect?
         Vector3 dir1 = (p1b - p1a).normalized;
         Vector3 dir2 = (p2b - p2a).normalized;
         float u = (p1a.y * dir2.x + dir2.y * p2a.x - p2a.y * dir2.x - dir2.y * p1a.x) / (dir1.x * dir2.y - dir1.y * dir2.x);
         float v = (p1a.x + dir1.x * u - p2a.x) / dir2.x;
         if (!(u > 0 && v > 0)) return null;
+        // if yes use line line intersect to find result point
         else return new Vector2(((((p1a.x * p1b.y) - (p1a.y * p1b.x)) * (p2a.x - p2b.x)) - ((p1a.x - p1b.x) * ((p2a.x * p2b.y) - (p2a.y * p2b.x)))) /
           (((p1a.x - p1b.x) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * (p2a.x - p2b.x))), ((((p1a.x * p1b.y) - (p1a.y * p1b.x)) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * ((p2a.x * p2b.y) - (p2a.y * p2b.x)))) /
           (((p1a.x - p1b.x) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * (p2a.x - p2b.x))));
