@@ -63,7 +63,7 @@ public class ImpossibleStructure {
             //presumes standard impossible shape
             List<Vector3> points = GetCameraPoints(camera);
             //intersection of ends
-            Vector2? intersectionResult = Intersection(points[0], points[1], points[points.Count -2], points[points.Count - 1]);
+            Vector2? intersectionResult = Intersection(points[1], points[0], points[points.Count -2], points[points.Count - 1]);
             if (intersectionResult == null)
             {
                 Debug.LogError("Intersection was askew");
@@ -93,9 +93,14 @@ public class ImpossibleStructure {
         return ImpossibleSegments;
     }
 
+    // do ray based intersection
     private static Vector2? Intersection(Vector2 p1a, Vector2 p1b, Vector2 p2a, Vector2 p2b)
     {
-        if ((((p1a.x - p1b.x) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * (p2a.x - p2b.x))) == 0) return null;
+        Vector3 dir1 = (p1b - p1a).normalized;
+        Vector3 dir2 = (p2b - p2a).normalized;
+        float u = (p1a.y * dir2.x + dir2.y * p2a.x - p2a.y * dir2.x - dir2.y * p1a.x) / (dir1.x * dir2.y - dir1.y * dir2.x);
+        float v = (p1a.x + dir1.x * u - p2a.x) / dir2.x;
+        if (!(u > 0 && v > 0)) return null;
         else return new Vector2(((((p1a.x * p1b.y) - (p1a.y * p1b.x)) * (p2a.x - p2b.x)) - ((p1a.x - p1b.x) * ((p2a.x * p2b.y) - (p2a.y * p2b.x)))) /
           (((p1a.x - p1b.x) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * (p2a.x - p2b.x))), ((((p1a.x * p1b.y) - (p1a.y * p1b.x)) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * ((p2a.x * p2b.y) - (p2a.y * p2b.x)))) /
           (((p1a.x - p1b.x) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * (p2a.x - p2b.x))));
