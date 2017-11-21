@@ -23,10 +23,18 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
         // sample structure for tesing could be any impossible structure, This one is a penrose stairs
-        structure = new ImpossibleStructure(new Vector3(0,0,0));
+        //structure = new ImpossibleStructure(new Vector3(0,0,0));
+        //structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
+        //structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
+       // structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
+       // structure.SealStructure();
+       // SetObjectPool(structure);
+
+        structure = new ImpossibleStructure(new Vector3(0, 0, 0));
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
-        structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
-        structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
+        structure.AddSegment(new Vector3(0, 10, 5), Vector3.right);
+        structure.AddSegment(new Vector3(0, 5, 5), Vector3.forward);
+        structure.AddSegment(new Vector3(5, 5, 5), Vector3.up);
         structure.SealStructure();
         SetObjectPool(structure);
     }
@@ -237,12 +245,32 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         int count = structure.UnProjectedResults().Count * 2;
         for (int i = 0; i < count; i++)
         {
+            // for main segments
             StencilWriter prefabObject1 = Instantiate(StencilWriterPrefab, Vector3.zero, Quaternion.identity);
             StencilReader prefabObject2 = Instantiate(StencilReaderPrefab, Vector3.zero, Quaternion.identity);
             StencilClearer prefabObject3 = Instantiate(StencilClearerPrefab, Vector3.zero, Quaternion.identity);
-            StencilWriterObjectPool.Add(prefabObject1);
-            StencilReaderObjectPool.Add(prefabObject2);
-            StencilClearerObjectPool.Add(prefabObject3);
+            // for corners
+            StencilWriter prefabObject4 = Instantiate(StencilWriterPrefab, Vector3.zero, Quaternion.identity);
+            StencilReader prefabObject5 = Instantiate(StencilReaderPrefab, Vector3.zero, Quaternion.identity);
+            StencilClearer prefabObject6 = Instantiate(StencilClearerPrefab, Vector3.zero, Quaternion.identity);
+            // set up containers, for ease of use and debugging
+            GameObject MainMeshContainer = new GameObject("Body");
+            GameObject CornerMeshContainer = new GameObject("Corner");
+            GameObject SegmentContainer = new GameObject("Segment");
+            prefabObject1.transform.parent = MainMeshContainer.transform;
+            prefabObject2.transform.parent = MainMeshContainer.transform;
+            prefabObject3.transform.parent = MainMeshContainer.transform;
+
+            prefabObject4.transform.parent = CornerMeshContainer.transform;
+            prefabObject5.transform.parent = CornerMeshContainer.transform;
+            prefabObject6.transform.parent = CornerMeshContainer.transform;
+
+            MainMeshContainer.transform.parent = SegmentContainer.transform;
+            CornerMeshContainer.transform.parent = SegmentContainer.transform;
+
+            StencilWriterObjectPool.AddRange(new StencilWriter[2] { prefabObject1, prefabObject4 });
+            StencilReaderObjectPool.AddRange(new StencilReader[2] { prefabObject2, prefabObject5 });
+            StencilClearerObjectPool.AddRange(new StencilClearer[2] { prefabObject3, prefabObject6 });
         }
     }
 
