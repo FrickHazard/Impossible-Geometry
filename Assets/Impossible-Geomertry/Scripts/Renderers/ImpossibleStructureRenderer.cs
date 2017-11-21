@@ -23,20 +23,19 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
         // sample structure for tesing could be any impossible structure, This one is a penrose stairs
-        //structure = new ImpossibleStructure(new Vector3(0,0,0));
-        //structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
-        //structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
-       // structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
-       // structure.SealStructure();
-       // SetObjectPool(structure);
-
         structure = new ImpossibleStructure(new Vector3(0, 0, 0));
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
-        structure.AddSegment(new Vector3(0, 10, 5), Vector3.right);
-        structure.AddSegment(new Vector3(0, 5, 5), Vector3.forward);
-        structure.AddSegment(new Vector3(5, 5, 5), Vector3.up);
+        structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
+        structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
         structure.SealStructure();
         SetObjectPool(structure);
+        //structure = new ImpossibleStructure(new Vector3(0, 0, 0));
+        //structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
+        //structure.AddSegment(new Vector3(0, 10, 5), Vector3.right);
+        //structure.AddSegment(new Vector3(0, 5, 5), Vector3.forward);
+        //structure.AddSegment(new Vector3(5, 5, 5), Vector3.up);
+        //structure.SealStructure();
+        //SetObjectPool(structure);
     }
 	
     // run every frame
@@ -241,8 +240,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
     private void SetObjectPool(ImpossibleStructure structure)
     {
-        // twice count of structure to include corners
-        int count = structure.UnProjectedResults().Count * 2;
+        int count = structure.UnProjectedResults().Count;
         for (int i = 0; i < count; i++)
         {
             // for main segments

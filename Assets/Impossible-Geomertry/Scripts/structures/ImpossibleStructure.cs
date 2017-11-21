@@ -18,8 +18,6 @@ public class ImpossibleStructure {
         nodes.Add(startPosition);
     }
 
-
-
     public void AddSegment(Vector3 point, Vector3 normal)
     {
         if (Sealed)
@@ -78,8 +76,8 @@ public class ImpossibleStructure {
         for (int i = 0; i < nodes.Count - 1; i++)
         {
             ImpossibleSegmentType segmentType = ImpossibleSegmentType.Spacer;
-            if (i == 0) segmentType = ImpossibleSegmentType.Caster;
-            else if (i == nodes.Count - 1) segmentType = ImpossibleSegmentType.Eater;
+            if (i == 0) segmentType = ImpossibleSegmentType.Eater;
+            else if (i == nodes.Count - 2) segmentType = ImpossibleSegmentType.Caster;
             result.Add(new ImpossibleSegment(nodes[i], nodes[i + 1], normals[i], segmentType));
         }
         return result;
