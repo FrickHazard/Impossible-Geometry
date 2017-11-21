@@ -5,16 +5,20 @@ using UnityEngine;
 
 public class ImpossibleStructure {
 
-    private List<Vector3> nodes = new List<Vector3>();
-    private List<Vector3> normals = new List<Vector3>();
-    private bool isSealed = false;
+#region public properties
 
     public bool Sealed { get { return isSealed; } }
+
+    #endregion public Properties
+
+#region public methods
 
     public ImpossibleStructure(Vector3 startPosition)
     {
         nodes.Add(startPosition);
     }
+
+
 
     public void AddSegment(Vector3 point, Vector3 normal)
     {
@@ -59,8 +63,8 @@ public class ImpossibleStructure {
             for (int i = 0; i < reProjectedPoints.Count - 1; i++)
             {
                 ImpossibleSegmentType segmentType = ImpossibleSegmentType.Spacer;
-                if (i == 0) segmentType = ImpossibleSegmentType.Caster;
-                else if (i == reProjectedPoints.Count - 1) segmentType = ImpossibleSegmentType.Eater;
+                if (i == 0) segmentType = ImpossibleSegmentType.Eater;
+                else if (i == reProjectedPoints.Count - 2) segmentType = ImpossibleSegmentType.Caster;
                 result.Add(new ImpossibleSegment(reProjectedPoints[i], reProjectedPoints[i + 1], normals[i], segmentType));
             }
             return result;
@@ -85,6 +89,18 @@ public class ImpossibleStructure {
     {
         isSealed = false;
     }
+
+    #endregion
+
+#region private fields
+
+    private List<Vector3> nodes = new List<Vector3>();
+    private List<Vector3> normals = new List<Vector3>();
+    private bool isSealed = false;
+
+    #endregion
+
+# region private methods
 
     private List<Vector3> GetPointsInCameraSpace(Camera camera)
     {
@@ -132,4 +148,7 @@ public class ImpossibleStructure {
         }
         return result;
     }
+
+#endregion
+
 }
