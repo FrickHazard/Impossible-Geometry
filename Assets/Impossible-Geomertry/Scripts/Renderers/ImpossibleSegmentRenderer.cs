@@ -7,7 +7,7 @@ public class ImpossibleSegmentRenderer : MonoBehaviour {
 
     public Vector3 StartPoint;
     public Vector3 EndPoint;
-    public ImpossibleSegementType SegmantType;
+    public ImpossibleSegmentType SegmantType;
 
     public Material SpacerMaterial;
     public Material CastMaterial;
@@ -60,7 +60,7 @@ public class ImpossibleSegmentRenderer : MonoBehaviour {
                 7, 5, 3,
             }, 0);
             filter.mesh = mesh;
-            if (SegmantType == ImpossibleSegementType.Spacer)
+            if (SegmantType == ImpossibleSegmentType.Spacer)
             {
                 meshRenderer.sharedMaterial = SpacerMaterial;
             }

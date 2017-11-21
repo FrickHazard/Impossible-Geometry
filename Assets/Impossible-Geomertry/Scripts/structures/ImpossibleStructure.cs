@@ -5,103 +5,106 @@ using UnityEngine;
 
 public class ImpossibleStructure {
 
-    private List<ImpossibleSegment> ImpossibleSegments = new List<ImpossibleSegment>();
+    private List<Vector3> nodes = new List<Vector3>();
+    private List<Vector3> normals = new List<Vector3>();
+    private bool isSealed = false;
 
-    private List<Vector3> GetCameraPoints(Camera camera)
-    {
-        var result = new List<Vector3>();
-        for (int i =0; i < ImpossibleSegments.Count; i++)
-        {
-           result.Add(camera.worldToCameraMatrix.MultiplyPoint(ImpossibleSegments[i].Start));
-        }
-        if (ImpossibleSegments.Count > 0)
-        {
-            result.Add(camera.worldToCameraMatrix.MultiplyPoint(ImpossibleSegments[ImpossibleSegments.Count - 1].End));
-        }
-        return result;
-    }
+    public bool Sealed { get { return isSealed; } }
 
-    private List<Vector3> GetWorldPoints()
+    public ImpossibleStructure(Vector3 startPosition)
     {
-        var result = new List<Vector3>();
-        for (int i = 0; i < ImpossibleSegments.Count; i++)
-        {
-            result.Add(ImpossibleSegments[i].Start);
-        }
-        if (ImpossibleSegments.Count > 0)
-        {
-            result.Add(ImpossibleSegments[ImpossibleSegments.Count - 1].End);
-        }
-        return result;
+        nodes.Add(startPosition);
     }
 
     public void AddSegment(Vector3 point, Vector3 normal)
     {
-        if (ImpossibleSegments.Count == 0)
-        {
-            // if first start at zero
-            ImpossibleSegments.Add(new ImpossibleSegment(Vector3.zero, point, normal));
-            ImpossibleSegments[0].SegmentType = ImpossibleSegementType.Caster;
-        }
+        if (Sealed)
+            throw new System.ArgumentException("Impossible Structure is sealed.  Checked If structure is sealed before attempting to Add a Segment");
         else
         {
-            if (ImpossibleSegments.Count > 1)
-            {
-                // if more than 
-                ImpossibleSegments[ImpossibleSegments.Count - 1].SegmentType = ImpossibleSegementType.Spacer;
-            }
-            ImpossibleSegments.Add(new ImpossibleSegment(ImpossibleSegments[ImpossibleSegments.Count - 1].End, point, normal));
-            ImpossibleSegments[0].SegmentType = ImpossibleSegementType.Eater;
+            nodes.Add(point);
+            normals.Add(normal);
         }
     }
 
-    public List<ImpossibleSegment> ProjectResult(Camera camera)
+    public List<ImpossibleSegment> ProjectResults(Camera camera)
     {
-        if (ImpossibleSegments.Count > 2)
+        if (nodes.Count > 2)
         {
-            
+
             //presumes standard impossible shape
-            List<Vector3> points = GetCameraPoints(camera);
-            //intersection of ends
-            Vector2? intersectionResult = Intersection(points[1], points[0], points[points.Count -2], points[points.Count - 1]);
+            List<Vector3> points = GetPointsInCameraSpace(camera);
+
+            //intersection of ends, in the directions of begining and end of segment structure
+            Vector2? intersectionResult = RayTestedIntersection(points[1], points[0], points[points.Count - 2], points[points.Count - 1]);
+
             if (intersectionResult == null)
             {
                 return null;
             }
+
             Vector2 intersection = (Vector2)intersectionResult;
-            // intersection result 
+
+            // stitch result into start and end points, in camera space, thus -1 z
             points[0] = new Vector3(intersection.x, intersection.y, -1);
             points[points.Count - 1] = new Vector3(intersection.x, intersection.y, -1);
+
+            // project all points onto camera plane in camera space
             List<Vector3> projectedPoints = ProjectPointsOnToScreenPlane(camera, points);
-            List<Vector3> resultPoints = ReProjectPoints(camera, projectedPoints, GetWorldPoints());
-            resultPoints = resultPoints.Select(point => camera.cameraToWorldMatrix.MultiplyPoint(point)).ToList();
+
+            // reproject points to the orignal world points, by relative camera space distance
+            List<Vector3> reProjectedPoints = ReProjectPoints(camera, projectedPoints, nodes);
+
             List<ImpossibleSegment> result = new List<ImpossibleSegment>();
-            for (int i = 0; i < resultPoints.Count -1; i++)
+            for (int i = 0; i < reProjectedPoints.Count - 1; i++)
             {
-                result.Add(new ImpossibleSegment(resultPoints[i], resultPoints[i + 1], ImpossibleSegments[i].Normal));
-                result[i].SegmentType = ImpossibleSegments[i].SegmentType;
+                ImpossibleSegmentType segmentType = ImpossibleSegmentType.Spacer;
+                if (i == 0) segmentType = ImpossibleSegmentType.Caster;
+                else if (i == reProjectedPoints.Count - 1) segmentType = ImpossibleSegmentType.Eater;
+                result.Add(new ImpossibleSegment(reProjectedPoints[i], reProjectedPoints[i + 1], normals[i], segmentType));
             }
             return result;
         }
-        Debug.LogError("Structure had less than 2 segments");
-        return ImpossibleSegments;
+        else throw new System.InvalidOperationException("Structure had less than 2 segments!");
     }
 
-    public List<ImpossibleSegment> GetSegments()
+    public List<ImpossibleSegment> UnProjectedResults()
     {
-        return ImpossibleSegments;
+        List<ImpossibleSegment> result = new List<ImpossibleSegment>();
+        for (int i = 0; i < nodes.Count - 1; i++)
+        {
+            ImpossibleSegmentType segmentType = ImpossibleSegmentType.Spacer;
+            if (i == 0) segmentType = ImpossibleSegmentType.Caster;
+            else if (i == nodes.Count - 1) segmentType = ImpossibleSegmentType.Eater;
+            result.Add(new ImpossibleSegment(nodes[i], nodes[i + 1], normals[i], segmentType));
+        }
+        return result;
     }
 
-    // do ray based intersection
-    private static Vector2? Intersection(Vector2 p1a, Vector2 p1b, Vector2 p2a, Vector2 p2b)
+    public void SealStructure()
     {
-        // does rays intersect?
+        isSealed = false;
+    }
+
+    private List<Vector3> GetPointsInCameraSpace(Camera camera)
+    {
+        var result = new List<Vector3>();
+        for (int i = 0; i < nodes.Count; i++)
+        {
+           result.Add(camera.worldToCameraMatrix.MultiplyPoint(nodes[i]));
+        }
+        return result;
+    }
+
+    private static Vector2? RayTestedIntersection(Vector2 p1a, Vector2 p1b, Vector2 p2a, Vector2 p2b)
+    {
+        // do rays intersect?
         Vector3 dir1 = (p1b - p1a).normalized;
         Vector3 dir2 = (p2b - p2a).normalized;
         float u = (p1a.y * dir2.x + dir2.y * p2a.x - p2a.y * dir2.x - dir2.y * p1a.x) / (dir1.x * dir2.y - dir1.y * dir2.x);
         float v = (p1a.x + dir1.x * u - p2a.x) / dir2.x;
         if (!(u > 0 && v > 0)) return null;
-        // if yes use line line intersect to find result point
+        // if yes use line line intersect to find resulting intersection point
         else return new Vector2(((((p1a.x * p1b.y) - (p1a.y * p1b.x)) * (p2a.x - p2b.x)) - ((p1a.x - p1b.x) * ((p2a.x * p2b.y) - (p2a.y * p2b.x)))) /
           (((p1a.x - p1b.x) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * (p2a.x - p2b.x))), ((((p1a.x * p1b.y) - (p1a.y * p1b.x)) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * ((p2a.x * p2b.y) - (p2a.y * p2b.x)))) /
           (((p1a.x - p1b.x) * (p2a.y - p2b.y)) - ((p1a.y - p1b.y) * (p2a.x - p2b.x))));
@@ -125,7 +128,7 @@ public class ImpossibleStructure {
         for (int i = 0; i < projectedPoints.Count; i++)
         {
             var vector = Vector3.Project((camera.worldToCameraMatrix.MultiplyPoint(origonalPoints[i]) - projectedPoints[i]), -Vector3.forward);
-            result.Add(projectedPoints[i] += vector);
+            result.Add(camera.cameraToWorldMatrix.MultiplyPoint(projectedPoints[i] += vector));
         }
         return result;
     }

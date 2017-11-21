@@ -22,10 +22,11 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     void Start () {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
-        structure = new ImpossibleStructure();
+        structure = new ImpossibleStructure(new Vector3(0,0,0));
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
         structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
+        structure.SealStructure();
         SetObjectPool(structure);
     }
 	
@@ -36,9 +37,9 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     private void BuildImpossibleStructure()
     {
         List<ImpossibleSegment> structureResult;
-        if (ShowOriginal) structureResult = structure.GetSegments();
-        else structureResult = structure.ProjectResult(Camera.main);
-        if(structureResult == null) structureResult = structure.GetSegments();
+        if (ShowOriginal) structureResult = structure.UnProjectedResults();
+        else structureResult = structure.ProjectResults(Camera.main);
+        if(structureResult == null) structureResult = structure.UnProjectedResults();
         ObjectPoolIndex = 0;
         for(int i = 0; i < structureResult.Count; i++)
         {
@@ -225,8 +226,8 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
     private void SetObjectPool(ImpossibleStructure structure)
     {
-        // double to include corners, and double again for stencil buffer tests;
-        int count = structure.GetSegments().Count * 2;
+        // twice count of structure to include corners
+        int count = structure.UnProjectedResults().Count * 2;
         for (int i = 0; i < count; i++)
         {
             StencilWriter prefabObject1 = Instantiate(StencilWriterPrefab, Vector3.zero, Quaternion.identity);
@@ -244,12 +245,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
          var cornerMesh = BuildImpossibleCorner(segment, next);
          int order = 1;  
 
-        if (segment.SegmentType == ImpossibleSegementType.Caster)
+        if (segment.SegmentType == ImpossibleSegmentType.Caster)
         {
             order = 3;
         }
 
-        if (segment.SegmentType == ImpossibleSegementType.Eater)
+        if (segment.SegmentType == ImpossibleSegmentType.Eater)
         {
             order = 2;
         }
@@ -260,7 +261,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         StencilReaderObjectPool[ObjectPoolIndex].SetUpRead(segmentMesh, order + 1);
         StencilReaderObjectPool[ObjectPoolIndex + 1].SetUpRead(cornerMesh, order + 1);
         // clear buffer on spacer for
-        if (segment.SegmentType == ImpossibleSegementType.Spacer)
+        if (segment.SegmentType == ImpossibleSegmentType.Spacer)
         {
             StencilClearerObjectPool[ObjectPoolIndex].SetUpClearer(segmentMesh, 3);
             StencilClearerObjectPool[ObjectPoolIndex + 1].SetUpClearer(cornerMesh, 3);

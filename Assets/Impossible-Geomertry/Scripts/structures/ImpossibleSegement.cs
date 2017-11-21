@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum ImpossibleSegementType {
+public enum ImpossibleSegmentType {
     Spacer,
     Caster,
     Eater,
@@ -17,17 +17,15 @@ public class ImpossibleSegment {
 
     public Vector3 Normal;
 
-    public ImpossibleSegment StartSegment = null;
 
-    public ImpossibleSegment EndSegment = null;
+    public ImpossibleSegmentType SegmentType = ImpossibleSegmentType.Caster;
 
-    public ImpossibleSegementType SegmentType = ImpossibleSegementType.Caster;
-
-    public ImpossibleSegment(Vector3 start, Vector3 end, Vector3 normal)
+    public ImpossibleSegment(Vector3 start, Vector3 end, Vector3 normal, ImpossibleSegmentType segmentType)
     {
         Normal = normal;
         Start = start;
         End = end;
+        SegmentType = segmentType;
     }
 
 }
