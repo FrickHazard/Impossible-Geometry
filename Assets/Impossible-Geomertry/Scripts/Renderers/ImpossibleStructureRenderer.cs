@@ -23,12 +23,14 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
         // sample structure for tesing could be any impossible structure, This one is a penrose stairs
+
         structure = new ImpossibleStructure(new Vector3(0, 0, 0));
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
         structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
         structure.SealStructure();
         SetObjectPool(structure);
+
         //structure = new ImpossibleStructure(new Vector3(0, 0, 0));
         //structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         //structure.AddSegment(new Vector3(0, 10, 5), Vector3.right);
@@ -56,9 +58,9 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         ObjectPoolIndex = 0;
         for(int i = 0; i < structureResult.Count; i++)
         {
-            ImpossibleSegment next;
-            if(i < structureResult.Count-1) next = structureResult[i + 1];
-            else next = structureResult[0];
+            ImpossibleSegment next = structureResult[i];
+            if (i == structureResult.Count - 1) next = structureResult[0];
+            else next = structureResult[i + 1];
 
             BuildSegment(structureResult[i], next);
         }
@@ -103,36 +105,41 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         return mesh;
     }
 
-    private Mesh BuildImpossibleCorner(ImpossibleSegment segment, ImpossibleSegment next)
+    private Mesh BuildImpossibleCorner(ImpossibleSegment segment, ImpossibleSegment previous)
     {
        var mesh = new Mesh();
        mesh.MarkDynamic();
        Vector3 point = segment.End;
        Vector3 forwardSegment1 = Vector3.Normalize(segment.End - segment.Start);
-       Vector3 forwardSegment2 = Vector3.Normalize(next.End - next.Start);
+       Vector3 forwardSegment2 = Vector3.Normalize(previous.End - previous.Start);
        Vector3 normalSegment1 = segment.Normal;
-       Vector3 normalSegment2 = next.Normal;
+       Vector3 normalSegment2 = previous.Normal;
        Vector3 normalRightSegment1 = Vector3.Cross(normalSegment1, forwardSegment1);
        Vector3 normalRightSegment2 = Vector3.Cross(normalSegment2, forwardSegment2);
 
-       Vector3 segment1LeftCornerPoint = point + -forwardSegment1 + -normalSegment1;
-       Vector3 segment1RightCornerPoint = point + -forwardSegment1 + normalSegment1;
-       Vector3 segment2RightCornerPoint = point + forwardSegment2 + -normalRightSegment2;
-       // because corner is constructed from 2 points final point runs along both lines, reason for small gaps on structure
-       Vector3 averageMirrorPoint = point + forwardSegment1 + -normalSegment1;
+       Vector3 backLeftTopPoint = point + -forwardSegment1 + -normalSegment1 + -normalRightSegment1;
+       Vector3 backRightTopPoint = point + -forwardSegment1 + normalSegment1 + -normalRightSegment1;
+       Vector3 fowardLeftTopPoint = point + forwardSegment1 + -normalSegment1 + -normalRightSegment1;
+       Vector3 fowardRightTopPoint = point + forwardSegment2 + -normalRightSegment2 + normalSegment2;
+
+      Vector3 backLeftBottomPoint = point + -forwardSegment1 + -normalSegment1 + normalRightSegment1;
+      Vector3 backRightBottomPoint = point + -forwardSegment1 + normalSegment1 + normalRightSegment1;
+      Vector3 fowardLeftBottomPoint = point + forwardSegment1 + -normalSegment1 + normalRightSegment1;
+      Vector3 fowardRightBottomPoint = point + forwardSegment2 + -normalRightSegment2 + -normalSegment2;
+
 
         // second number is depth
         mesh.SetVertices(new List<Vector3>(){
-                // forward up right
-                segment2RightCornerPoint + -normalSegment2,
-                segment1RightCornerPoint + normalRightSegment1,
-                averageMirrorPoint + normalRightSegment1,
-                segment1LeftCornerPoint + normalRightSegment1,
-
-                segment2RightCornerPoint + normalSegment2,
-                segment1RightCornerPoint + -normalRightSegment1,
-                averageMirrorPoint - normalRightSegment1,
-                segment1LeftCornerPoint - normalRightSegment1,
+               // top points
+               backLeftTopPoint,
+               backRightTopPoint,
+               fowardLeftTopPoint,
+               fowardRightTopPoint,
+               // bottom points
+               backLeftBottomPoint,
+               backRightBottomPoint,
+               fowardLeftBottomPoint,
+               fowardRightBottomPoint
             });
             mesh.SetTriangles(new List<int>(){
                 2, 1, 0,
@@ -180,11 +187,11 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 if (i % 3 == 0)
                 {
                     // trianlges on normal direction
-                    if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNextNormalColor(segment, 2);
+                    if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNormalColor(segment);
                     // ends
                     else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNextNormalColor(segment, 1);
                     // right of normal
-                    else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNormalColor(segment);
+                    else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 2);
                     else triColor = Color.white;
                 }
             }
@@ -254,7 +261,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             // set up containers, for ease of use and debugging
             GameObject MainMeshContainer = new GameObject("Body");
             GameObject CornerMeshContainer = new GameObject("Corner");
-            GameObject SegmentContainer = new GameObject("Segment");
+            GameObject SegmentContainer = new GameObject("Segment" + i.ToString());
             prefabObject1.transform.parent = MainMeshContainer.transform;
             prefabObject2.transform.parent = MainMeshContainer.transform;
             prefabObject3.transform.parent = MainMeshContainer.transform;
@@ -272,10 +279,10 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         }
     }
 
-    private void BuildSegment(ImpossibleSegment segment, ImpossibleSegment next)
+    private void BuildSegment(ImpossibleSegment segment, ImpossibleSegment previous)
     {
          var segmentMesh = BuildImpossibleSegmentMesh(segment);
-         var cornerMesh = BuildImpossibleCorner(segment, next);
+         var cornerMesh = BuildImpossibleCorner(segment, previous);
 
         // used with stencil buffer to tightly control rendering order
          int order = 1;  
