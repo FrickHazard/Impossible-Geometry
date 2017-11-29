@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ImpossibleStructureRenderer : MonoBehaviour {
@@ -24,20 +25,21 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         meshRenderer = GetComponent<MeshRenderer>();
         // sample structure for tesing could be any impossible structure, This one is a penrose stairs
 
+        //structure = new ImpossibleStructure(new Vector3(0, 0, 0));
+        //structure.AddSegment(new Vector3(0, -10, 0), Vector3.forward);
+        //structure.AddSegment(new Vector3(0, -10, -10), Vector3.right);
+        //structure.AddSegment(new Vector3(-10, -10, -10), Vector3.up);
+        //structure.SealStructure();
+        //SetObjectPool(structure);
+
         structure = new ImpossibleStructure(new Vector3(0, 0, 0));
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
-        structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
+        // when we decrease a value there is issues
+        structure.AddSegment(new Vector3(0, 0, 10), Vector3.forward);
+        structure.AddSegment(new Vector3(10, 0, 10), Vector3.up);
         structure.SealStructure();
         SetObjectPool(structure);
-
-        //structure = new ImpossibleStructure(new Vector3(0, 0, 0));
-        //structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
-        //structure.AddSegment(new Vector3(0, 10, 5), Vector3.right);
-        //structure.AddSegment(new Vector3(0, 5, 5), Vector3.forward);
-        //structure.AddSegment(new Vector3(5, 5, 5), Vector3.up);
-        //structure.SealStructure();
-        //SetObjectPool(structure);
     }
 	
     // run every frame
@@ -54,9 +56,8 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         else structureResult = structure.ProjectResults(Camera.main);
 
         if(structureResult == null) structureResult = structure.UnProjectedResults();
-
         ObjectPoolIndex = 0;
-        for(int i = 0; i < structureResult.Count; i++)
+        for (int i = 0; i < structureResult.Count; i++)
         {
             ImpossibleSegment next = structureResult[i];
             if (i == structureResult.Count - 1) next = structureResult[0];
@@ -64,7 +65,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
             BuildSegment(structureResult[i], next);
         }
-
+        DebugSegmentDirectionsList(structureResult);
     }
 
     private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment)
@@ -105,27 +106,27 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         return mesh;
     }
 
-    private Mesh BuildImpossibleCorner(ImpossibleSegment segment, ImpossibleSegment previous)
+    private Mesh BuildImpossibleCorner(ImpossibleSegment segment, ImpossibleSegment next)
     {
-       var mesh = new Mesh();
-       mesh.MarkDynamic();
-       Vector3 point = segment.End;
-       Vector3 forwardSegment1 = Vector3.Normalize(segment.End - segment.Start);
-       Vector3 forwardSegment2 = Vector3.Normalize(previous.End - previous.Start);
-       Vector3 normalSegment1 = segment.Normal;
-       Vector3 normalSegment2 = previous.Normal;
-       Vector3 normalRightSegment1 = Vector3.Cross(normalSegment1, forwardSegment1);
-       Vector3 normalRightSegment2 = Vector3.Cross(normalSegment2, forwardSegment2);
+        var mesh = new Mesh();
+        mesh.MarkDynamic();
+        Vector3 point = segment.End;
+        Vector3 forwardSegment1 = Vector3.Normalize(segment.End - segment.Start);
+        Vector3 forwardSegment2 = Vector3.Normalize(next.End - next.Start);
+        Vector3 normalSegment1 = segment.Normal;
+        Vector3 normalSegment2 = next.Normal;
+        Vector3 normalRightSegment1 = Vector3.Cross(normalSegment1, forwardSegment1);
+        Vector3 normalRightSegment2 = Vector3.Cross(normalSegment2, forwardSegment2);
 
-       Vector3 backLeftTopPoint = point + -forwardSegment1 + -normalSegment1 + -normalRightSegment1;
-       Vector3 backRightTopPoint = point + -forwardSegment1 + normalSegment1 + -normalRightSegment1;
-       Vector3 fowardLeftTopPoint = point + forwardSegment1 + -normalSegment1 + -normalRightSegment1;
-       Vector3 fowardRightTopPoint = point + forwardSegment2 + -normalRightSegment2 + normalSegment2;
+        Vector3 backLeftTopPoint = point + -forwardSegment1 + -normalSegment1 + -normalRightSegment1;
+        Vector3 backRightTopPoint = point + -forwardSegment1 + normalSegment1 + -normalRightSegment1;
+        Vector3 fowardLeftTopPoint = point + forwardSegment1 + -normalSegment1 + -normalRightSegment1;
+        Vector3 fowardRightTopPoint = point + forwardSegment2 + -normalRightSegment2 + normalSegment2;
 
-      Vector3 backLeftBottomPoint = point + -forwardSegment1 + -normalSegment1 + normalRightSegment1;
-      Vector3 backRightBottomPoint = point + -forwardSegment1 + normalSegment1 + normalRightSegment1;
-      Vector3 fowardLeftBottomPoint = point + forwardSegment1 + -normalSegment1 + normalRightSegment1;
-      Vector3 fowardRightBottomPoint = point + forwardSegment2 + -normalRightSegment2 + -normalSegment2;
+        Vector3 backLeftBottomPoint = point + -forwardSegment1 + -normalSegment1 + normalRightSegment1;
+        Vector3 backRightBottomPoint = point + -forwardSegment1 + normalSegment1 + normalRightSegment1;
+        Vector3 fowardLeftBottomPoint = point + forwardSegment1 + -normalSegment1 + normalRightSegment1;
+        Vector3 fowardRightBottomPoint = point + forwardSegment2 + -normalRightSegment2 + -normalSegment2;
 
 
         // second number is depth
@@ -141,7 +142,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                fowardLeftBottomPoint,
                fowardRightBottomPoint
             });
-            mesh.SetTriangles(new List<int>(){
+        mesh.SetTriangles(new List<int>(){
                 2, 1, 0,
                 2, 3, 1,
                 4, 5, 6,
@@ -155,10 +156,10 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
-  
-            ColorizeMesh(mesh, segment, true);
-            mesh.RecalculateBounds();
-            return mesh;
+
+        ColorizeMesh(mesh, segment, true);
+        mesh.RecalculateBounds();
+        return mesh;
     }
 
     private void ColorizeMesh(Mesh mesh, ImpossibleSegment segment, bool isCorner)
@@ -309,6 +310,20 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             StencilClearerObjectPool[ObjectPoolIndex + 1].SetUpClearer(cornerMesh, 3);
         }
          ObjectPoolIndex += 2;
+    }
+
+    private void DebugSegmentDirectionsList(List<ImpossibleSegment> segments)
+    {
+        foreach (var segment in segments)
+        {
+            Vector3 center = (segment.Start + segment.End) * 0.5f;
+            Vector3 normal = segment.Normal * 2;
+            Vector3 forward = Vector3.Normalize(segment.End - segment.Start) * 2;
+            Vector3 right = Vector3.Cross(normal, forward);
+            Debug.DrawLine(center, center + normal, Color.green, 1f);
+            Debug.DrawLine(center, center + forward, Color.blue, 1f);
+            Debug.DrawLine(center, center + right, Color.red, 1f);
+        }
     }
 
 }
