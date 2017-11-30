@@ -52,7 +52,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         List<ImpossibleSegment> structureResult;
         List<ImpossibleSegment> originalStructure = structure.UnProjectedResults();
 
-        if (ShowOriginal) structureResult = structure.UnProjectedResults();
+        if (ShowOriginal) structureResult = originalStructure;
 
         else structureResult = structure.ProjectResults(Camera.main);
 
@@ -64,9 +64,9 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             if (i == structureResult.Count - 1) next = structureResult[0];
             else next = structureResult[i + 1];
 
-            BuildSegment(structureResult[i], next, originalStructure[i]);
+            BuildSegment(structureResult[i], originalStructure[i]);
         }
-        DebugSegmentDirectionsList(structureResult);
+       //  DebugSegmentDirectionsList(structureResult);
     }
 
     private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment, ImpossibleSegment original)
@@ -102,7 +102,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
-        ColorizeMesh(mesh, segment, false);
+        ColorizeMesh(mesh, segment);
         mesh.RecalculateBounds();
         return mesh;
     }
@@ -139,12 +139,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
-        ColorizeMesh(mesh, segment, false);
+        ColorizeMesh(mesh, segment);
         mesh.RecalculateBounds();
         return mesh;
     }
 
-    private void ColorizeMesh(Mesh mesh, ImpossibleSegment segment, bool isCorner)
+    private void ColorizeMesh(Mesh mesh, ImpossibleSegment segment)
     {
         MakeMeshHaveUniqueVertsPerTriangle(mesh);
         Color[] colors = new Color[mesh.vertices.Length];
@@ -152,8 +152,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         for (int i = 0; i < mesh.triangles.Length; i++)
         {
             int vertIndex = mesh.triangles[i];
-            if (!isCorner)
-            {
+          
                 if (i % 3 == 0)
                 {
                     // trianlges on normal direction
@@ -164,20 +163,6 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                     else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 1);
                     else triColor = Color.white;
                 }
-            }
-            else
-            {
-                if (i % 3 == 0)
-                {
-                    // trianlges on normal direction
-                    if (i == 24 || i == 27 || i == 30 || i == 33) triColor = GetNormalColor(segment);
-                    // ends
-                    else if (i == 0 || i == 3 || i == 6 || i == 9) triColor = GetNextNormalColor(segment, 1);
-                    // right of normal
-                    else if (i == 12 || i == 15 || i == 18 || i == 21) triColor = GetNextNormalColor(segment, 2);
-                    else triColor = Color.white;
-                }
-            }
             colors[vertIndex] = triColor;
         }
         mesh.colors = colors;
@@ -262,10 +247,10 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         }
     }
 
-    private void BuildSegment(ImpossibleSegment segment, ImpossibleSegment next, ImpossibleSegment original)
+    private void BuildSegment(ImpossibleSegment segment, ImpossibleSegment original)
     {
          var segmentMesh = BuildImpossibleSegmentMesh(segment, original);
-         var cornerMesh = BuildImpossibleCorner(segment, next, original);
+         var cornerMesh = BuildImpossibleCorner(segment, original);
 
         // used with stencil buffer to tightly control rendering order
          int order = 1;  
