@@ -17,7 +17,6 @@ public class ImpossibleSegment {
 
     public Vector3 Normal;
 
-
     public ImpossibleSegmentType SegmentType = ImpossibleSegmentType.Caster;
 
     public ImpossibleSegment(Vector3 start, Vector3 end, Vector3 normal, ImpossibleSegmentType segmentType)

@@ -50,6 +50,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     private void BuildImpossibleStructure()
     {
         List<ImpossibleSegment> structureResult;
+        List<ImpossibleSegment> originalStructure = structure.UnProjectedResults();
 
         if (ShowOriginal) structureResult = structure.UnProjectedResults();
 
@@ -63,17 +64,17 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             if (i == structureResult.Count - 1) next = structureResult[0];
             else next = structureResult[i + 1];
 
-            BuildSegment(structureResult[i], next);
+            BuildSegment(structureResult[i], next, originalStructure[i]);
         }
         DebugSegmentDirectionsList(structureResult);
     }
 
-    private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment)
+    private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment, ImpossibleSegment original)
     {
         Mesh mesh = new Mesh();
         mesh.MarkDynamic();
-        Vector3 forward = -Vector3.Normalize(segment.End - segment.Start);
-        Vector3 normal = segment.Normal;
+        Vector3 forward = -Vector3.Normalize(original.End - original.Start);
+        Vector3 normal = original.Normal;
         Vector3 normalRight = Vector3.Cross(normal, forward);
         // allows corners to have room
         Vector3 cornerBuffer = forward;
@@ -106,48 +107,23 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         return mesh;
     }
 
-    private Mesh BuildImpossibleCorner(ImpossibleSegment segment, ImpossibleSegment next)
+    private Mesh BuildImpossibleCorner(ImpossibleSegment segment, ImpossibleSegment original)
     {
-        var mesh = new Mesh();
+        Mesh mesh = new Mesh();
         mesh.MarkDynamic();
-        Vector3 point = segment.End;
-        Vector3 forwardSegment1 = Vector3.Normalize(segment.End - segment.Start);
-        Vector3 forwardSegment2 = Vector3.Normalize(next.End - next.Start);
-        Vector3 normalSegment1 = segment.Normal;
-        Vector3 normalSegment2 = next.Normal;
-        Vector3 normalRightSegment1 = Vector3.Cross(normalSegment1, forwardSegment1);
-        Vector3 normalRightSegment2 = Vector3.Cross(normalSegment2, forwardSegment2);
-
-        // default alignment
-        Vector3 backLeftTopPoint = point + -forwardSegment1 + -normalSegment1 + -normalRightSegment1;
-        Vector3 backRightTopPoint = point + -forwardSegment1 + normalSegment1 + -normalRightSegment1;
-        Vector3 fowardLeftTopPoint = point + forwardSegment1 + -normalSegment1 + -normalRightSegment1;
-        Vector3 fowardRightTopPoint = point + forwardSegment2 + -normalRightSegment2 + normalSegment2;
-
-        Vector3 backLeftBottomPoint = point + -forwardSegment1 + -normalSegment1 + normalRightSegment1;
-        Vector3 backRightBottomPoint = point + -forwardSegment1 + normalSegment1 + normalRightSegment1;
-        Vector3 fowardLeftBottomPoint = point + forwardSegment1 + -normalSegment1 + normalRightSegment1;
-        Vector3 fowardRightBottomPoint = point + forwardSegment2 + -normalRightSegment2 + -normalSegment2;
-
-        // cubic alignment check
-        if (Vector3.Dot(forwardSegment1, forwardSegment2) > 0)
-        {
-            fowardRightTopPoint = point + -forwardSegment2 + -normalRightSegment2 + -normalSegment2;
-            fowardLeftBottomPoint = point + forwardSegment2 + normalRightSegment2 + -normalSegment2;
-        }
-
-        // second number is depth
+        Vector3 forward = -Vector3.Normalize(original.End - original.Start);
+        Vector3 normal = original.Normal;
+        Vector3 normalRight = Vector3.Cross(normal, forward);
+        Vector3 cornerBuffer = forward;
         mesh.SetVertices(new List<Vector3>(){
-               // top points
-               backLeftTopPoint,
-               backRightTopPoint,
-               fowardLeftTopPoint,
-               fowardRightTopPoint,
-               // bottom points
-               backLeftBottomPoint,
-               backRightBottomPoint,
-               fowardLeftBottomPoint,
-               fowardRightBottomPoint
+                segment.End+ normal + normalRight + cornerBuffer,
+                segment.End + -normal + normalRight + cornerBuffer,
+                segment.End + normal + -normalRight + cornerBuffer,
+                segment.End + -normal + -normalRight + cornerBuffer,
+                segment.End + normal + normalRight + -cornerBuffer,
+                segment.End + -normal + normalRight + -cornerBuffer,
+                segment.End + normal + -normalRight + -cornerBuffer,
+                segment.End + -normal + -normalRight + -cornerBuffer,
             });
         mesh.SetTriangles(new List<int>(){
                 2, 1, 0,
@@ -163,8 +139,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
                 1, 3, 5,
                 7, 5, 3,
             }, 0);
-
-        ColorizeMesh(mesh, segment, true);
+        ColorizeMesh(mesh, segment, false);
         mesh.RecalculateBounds();
         return mesh;
     }
@@ -287,10 +262,10 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         }
     }
 
-    private void BuildSegment(ImpossibleSegment segment, ImpossibleSegment previous)
+    private void BuildSegment(ImpossibleSegment segment, ImpossibleSegment next, ImpossibleSegment original)
     {
-         var segmentMesh = BuildImpossibleSegmentMesh(segment);
-         var cornerMesh = BuildImpossibleCorner(segment, previous);
+         var segmentMesh = BuildImpossibleSegmentMesh(segment, original);
+         var cornerMesh = BuildImpossibleCorner(segment, next, original);
 
         // used with stencil buffer to tightly control rendering order
          int order = 1;  
