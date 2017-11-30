@@ -118,6 +118,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         Vector3 normalRightSegment1 = Vector3.Cross(normalSegment1, forwardSegment1);
         Vector3 normalRightSegment2 = Vector3.Cross(normalSegment2, forwardSegment2);
 
+        // default alignment
         Vector3 backLeftTopPoint = point + -forwardSegment1 + -normalSegment1 + -normalRightSegment1;
         Vector3 backRightTopPoint = point + -forwardSegment1 + normalSegment1 + -normalRightSegment1;
         Vector3 fowardLeftTopPoint = point + forwardSegment1 + -normalSegment1 + -normalRightSegment1;
@@ -128,6 +129,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         Vector3 fowardLeftBottomPoint = point + forwardSegment1 + -normalSegment1 + normalRightSegment1;
         Vector3 fowardRightBottomPoint = point + forwardSegment2 + -normalRightSegment2 + -normalSegment2;
 
+        // cubic alignment check
+        if (Vector3.Dot(forwardSegment1, forwardSegment2) > 0)
+        {
+            fowardRightTopPoint = point + -forwardSegment2 + -normalRightSegment2 + -normalSegment2;
+            fowardLeftBottomPoint = point + forwardSegment2 + normalRightSegment2 + -normalSegment2;
+        }
 
         // second number is depth
         mesh.SetVertices(new List<Vector3>(){
