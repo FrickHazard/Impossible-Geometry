@@ -25,25 +25,30 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         meshRenderer = GetComponent<MeshRenderer>();
         // sample structure for tesing could be any impossible structure, This one is a penrose stairs
 
-        //structure = new ImpossibleStructure(new Vector3(0, 0, 0));
-        //structure.AddSegment(new Vector3(0, -10, 0), Vector3.forward);
-        //structure.AddSegment(new Vector3(0, -10, -10), Vector3.right);
-        //structure.AddSegment(new Vector3(-10, -10, -10), Vector3.up);
-        //structure.SealStructure();
-        //SetObjectPool(structure);
-
         structure = new ImpossibleStructure(new Vector3(0, 0, 0));
         structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
         structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
-        // when we decrease a value there is issues
-        structure.AddSegment(new Vector3(0, 0, 10), Vector3.forward);
-        structure.AddSegment(new Vector3(10, 0, 10), Vector3.up);
+        structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
         structure.SealStructure();
         SetObjectPool(structure);
+
+        //structure = new ImpossibleStructure(new Vector3(0, 0, 0));
+        //structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
+        //structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
+        //// when we decrease a value there is issues
+        //structure.AddSegment(new Vector3(0, 0, 10), Vector3.forward);
+        //structure.AddSegment(new Vector3(10, 0, 10), Vector3.up);
+        //structure.SealStructure();
+        //SetObjectPool(structure);
     }
 	
     // run every frame
 	void Update() {
+       if (Input.GetKeyDown("space"))
+       {
+            Camera.main.transform.position = structure.Centroid + -(Vector3)structure.GetNaturalIntersectionPlaneNormal() * 10;
+            Camera.main.transform.forward = (Vector3)structure.GetNaturalIntersectionPlaneNormal();
+       }
        BuildImpossibleStructure();
     }
 
@@ -78,7 +83,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         Vector3 normalRight = Vector3.Cross(normal, forward);
         // allows corners to have room
         Vector3 cornerBuffer = forward;
-        mesh.SetVertices(new List<Vector3>(){
+        mesh.SetVertices(new List<Vector3>() {
             segment.Start+ normal + normalRight + -cornerBuffer,
                 segment.Start + -normal + normalRight + -cornerBuffer,
                 segment.Start + normal + -normalRight + -cornerBuffer,

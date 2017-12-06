@@ -5,7 +5,22 @@ using UnityEngine;
 
 public class ImpossibleStructure {
 
-#region public properties
+    #region public properties
+
+    public Vector3 Centroid
+    {
+        get
+        {
+            Vector3 result = Vector3.zero;
+            if (nodes.Count == 0) return result;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                result += nodes[i];
+            }
+            result /= nodes.Count;
+            return result;
+       }
+    }
 
     public bool Sealed { get { return isSealed; } }
 
@@ -86,6 +101,12 @@ public class ImpossibleStructure {
     public void SealStructure()
     {
         isSealed = false;
+    }
+
+    public Vector3? GetNaturalIntersectionPlaneNormal()
+    {
+        if (nodes.Count < 3) return null;
+        else return Vector3.Normalize(nodes[nodes.Count - 1] - nodes[0]);
     }
 
     #endregion
