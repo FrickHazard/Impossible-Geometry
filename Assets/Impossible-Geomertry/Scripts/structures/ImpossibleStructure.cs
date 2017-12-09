@@ -59,7 +59,7 @@ public class ImpossibleStructure {
             {
                 return null;
             }
-
+       
             Vector2 intersection = (Vector2)intersectionResult;
 
             // stitch result into start and end points, in camera space, thus -1 z

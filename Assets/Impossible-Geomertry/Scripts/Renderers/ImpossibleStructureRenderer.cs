@@ -23,32 +23,18 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     void Start () {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
-        // sample structure for tesing could be any impossible structure, This one is a penrose stairs
-
-        structure = new ImpossibleStructure(new Vector3(0, 0, 0));
-        structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
-        structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
-        structure.AddSegment(new Vector3(10, 10, 10), Vector3.up);
-        structure.SealStructure();
+        structure = NavigationBoard.ActiveStructure;
         SetObjectPool(structure);
-
-        //structure = new ImpossibleStructure(new Vector3(0, 0, 0));
-        //structure.AddSegment(new Vector3(0, 10, 0), Vector3.forward);
-        //structure.AddSegment(new Vector3(0, 10, 10), Vector3.right);
-        //// when we decrease a value there is issues
-        //structure.AddSegment(new Vector3(0, 0, 10), Vector3.forward);
-        //structure.AddSegment(new Vector3(10, 0, 10), Vector3.up);
-        //structure.SealStructure();
-        //SetObjectPool(structure);
     }
 	
     // run every frame
 	void Update() {
-       if (Input.GetKeyDown("space"))
-       {
-            Camera.main.transform.position = structure.Centroid + -(Vector3)structure.GetNaturalIntersectionPlaneNormal() * 10;
-            Camera.main.transform.forward = (Vector3)structure.GetNaturalIntersectionPlaneNormal();
-       }
+        // update structure
+        if (structure != NavigationBoard.ActiveStructure)
+        {
+            structure = NavigationBoard.ActiveStructure;
+            SetObjectPool(structure);
+        }
        BuildImpossibleStructure();
     }
 
@@ -220,6 +206,12 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
     private void SetObjectPool(ImpossibleStructure structure)
     {
+        StencilWriterObjectPool.ForEach(obj => Destroy(obj));
+        StencilClearerObjectPool.ForEach(obj => Destroy(obj));
+        StencilReaderObjectPool.ForEach(obj => Destroy(obj));
+        StencilWriterObjectPool.Clear();
+        StencilClearerObjectPool.Clear();
+        StencilReaderObjectPool.Clear();
         int count = structure.UnProjectedResults().Count;
         for (int i = 0; i < count; i++)
         {
