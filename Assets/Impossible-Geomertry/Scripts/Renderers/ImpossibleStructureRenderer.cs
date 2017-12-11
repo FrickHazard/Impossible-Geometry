@@ -17,6 +17,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     private List<StencilReader> StencilReaderObjectPool = new List<StencilReader>();
     private List<StencilWriter> StencilWriterObjectPool = new List<StencilWriter>();
     private List<StencilClearer> StencilClearerObjectPool = new List<StencilClearer>();
+    private List<GameObject> OrganizationHiearchyObjectPool = new List<GameObject>();
     private int ObjectPoolIndex = 0;
 
     // Use this for initialization
@@ -34,6 +35,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
         {
             structure = NavigationBoard.ActiveStructure;
             SetObjectPool(structure);
+            return;
         }
        BuildImpossibleStructure();
     }
@@ -206,9 +208,10 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
     private void SetObjectPool(ImpossibleStructure structure)
     {
-        StencilWriterObjectPool.ForEach(obj => Destroy(obj));
-        StencilClearerObjectPool.ForEach(obj => Destroy(obj));
-        StencilReaderObjectPool.ForEach(obj => Destroy(obj));
+        StencilWriterObjectPool.ForEach(obj => DestroyImmediate(obj.gameObject));
+        StencilClearerObjectPool.ForEach(obj => DestroyImmediate(obj.gameObject));
+        StencilReaderObjectPool.ForEach(obj => DestroyImmediate(obj.gameObject));
+        OrganizationHiearchyObjectPool.ForEach(obj => DestroyImmediate(obj));
         StencilWriterObjectPool.Clear();
         StencilClearerObjectPool.Clear();
         StencilReaderObjectPool.Clear();
@@ -238,6 +241,7 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
             MainMeshContainer.transform.parent = SegmentContainer.transform;
             CornerMeshContainer.transform.parent = SegmentContainer.transform;
 
+            OrganizationHiearchyObjectPool.AddRange(new GameObject[] {MainMeshContainer, CornerMeshContainer, SegmentContainer });
             StencilWriterObjectPool.AddRange(new StencilWriter[2] { prefabObject1, prefabObject4 });
             StencilReaderObjectPool.AddRange(new StencilReader[2] { prefabObject2, prefabObject5 });
             StencilClearerObjectPool.AddRange(new StencilClearer[2] { prefabObject3, prefabObject6 });

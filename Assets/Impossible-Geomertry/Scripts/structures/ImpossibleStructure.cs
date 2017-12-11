@@ -61,6 +61,7 @@ public class ImpossibleStructure {
             }
        
             Vector2 intersection = (Vector2)intersectionResult;
+            // intersection = ShrinkBackPoint(intersection, points[0], points[points.Count - 1]);
 
             // stitch result into start and end points, in camera space, thus -1 z
             points[0] = new Vector3(intersection.x, intersection.y, -1);
@@ -126,7 +127,7 @@ public class ImpossibleStructure {
         var result = new List<Vector3>();
         for (int i = 0; i < nodes.Count; i++)
         {
-           result.Add(camera.worldToCameraMatrix.MultiplyPoint(nodes[i]));
+           result.Add(camera.WorldToViewportPoint(nodes[i]));
         }
         return result;
     }
@@ -148,7 +149,7 @@ public class ImpossibleStructure {
     private List<Vector3> ProjectPointsOnToScreenPlane(Camera camera, List<Vector3> points)
     {
         //arbitrary center for plane
-        Plane plane = new Plane(camera.worldToCameraMatrix.MultiplyPoint(camera.transform.position + camera.transform.forward), -Vector3.forward);
+        Plane plane = new Plane(camera.WorldToViewportPoint(camera.transform.position + camera.transform.forward), -Vector3.forward);
         List<Vector3> result = new List<Vector3>();
         for (int i = 0; i < points.Count; i++)
         {
@@ -162,10 +163,17 @@ public class ImpossibleStructure {
         List<Vector3> result = new List<Vector3>();
         for (int i = 0; i < projectedPoints.Count; i++)
         {
-            var vector = Vector3.Project((camera.worldToCameraMatrix.MultiplyPoint(origonalPoints[i]) - projectedPoints[i]), -Vector3.forward);
-            result.Add(camera.cameraToWorldMatrix.MultiplyPoint(projectedPoints[i] += vector));
+            var vector = Vector3.Project((camera.WorldToViewportPoint(origonalPoints[i]) - projectedPoints[i]), -Vector3.forward);
+            result.Add(camera.ViewportToWorldPoint(projectedPoints[i] += vector));
         }
         return result;
+    }
+
+    private Vector2 ShrinkBackPoint(Vector2 point, Vector2 left, Vector2 right)
+    {
+        Vector2 leftMiddle = Vector2.Lerp(point, right, 0.3f);
+        Vector2 rightMiddle = Vector2.Lerp(point, left, 0.3f);
+        return Vector2.Lerp(rightMiddle, leftMiddle, 0.5f);
     }
 
 #endregion
