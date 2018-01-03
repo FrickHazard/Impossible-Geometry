@@ -59,7 +59,6 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
             BuildSegment(structureResult[i], originalStructure[i]);
         }
-       //  DebugSegmentDirectionsList(structureResult);
     }
 
     private Mesh BuildImpossibleSegmentMesh(ImpossibleSegment segment, ImpossibleSegment original)
