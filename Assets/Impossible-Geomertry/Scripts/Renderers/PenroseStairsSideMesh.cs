@@ -5,6 +5,8 @@ using UnityEngine;
 public class PenroseStairsSideMesh : MonoBehaviour {
     public Vector3 StartPoint;
     public Vector3 EndPoint;
+    public float LengthOfStep;
+    public float StepWidth = 1f;
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
 
@@ -12,17 +14,43 @@ public class PenroseStairsSideMesh : MonoBehaviour {
     {
         filter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
-        Build();
     }
 
     private void Update()
     {
-        Build();
+        DivideSideIntoSteps();
     }
 
-    public void Build()
+    private void DivideSideIntoSteps()
     {
-        filter.mesh = CreateStairCube(StartPoint, EndPoint, Vector3.up);
+        Vector3 baseVector = EndPoint - StartPoint;
+        int stairCount = Mathf.CeilToInt(baseVector.magnitude / LengthOfStep);
+        Vector3[] points = new Vector3[stairCount + 1];
+        for (int i = 0; i <= stairCount; i++)
+        {
+            float percent = (float)i / (float)stairCount;
+            Vector3 stepVector = Vector3.Lerp(StartPoint, EndPoint, percent);
+            points[i] = stepVector;
+        }
+
+        List<Mesh> meshes = new List<Mesh>();
+        for (int i = 0; i < points.Length - 1; i++ )
+        {
+            meshes.Add(CreateStairCube(points[i], points[i + 1], Vector3.up));
+        }
+        CombineMeshes(meshes);
+    }
+
+    private void CombineMeshes(List<Mesh> meshes)
+    {
+        CombineInstance[] combine = new CombineInstance[meshes.Count]; 
+        for (int i = 0; i < meshes.Count; i++)
+        {
+            combine[i].mesh = meshes[i];
+            combine[i].transform = Matrix4x4.identity;
+        }
+        filter.mesh = new Mesh();
+        filter.mesh.CombineMeshes(combine);
     }
 
     public Mesh CreateStairCube(Vector3 start, Vector3 end, Vector3 up)
@@ -34,9 +62,8 @@ public class PenroseStairsSideMesh : MonoBehaviour {
         Vector3 direction = end - start;
 
         Vector3 right = Vector3.Normalize(Vector3.Cross(direction.normalized, up));
-        // get correct size based on Pythagorean Theorem, ie for square 3A^3 = c^3;
         up = Vector3.Project(direction, up);
-        right *= Vector3.Project(direction, up).magnitude / 2;
+        right *= StepWidth / 2;
 
 
         mesh.SetVertices(new List<Vector3>() {
@@ -67,7 +94,11 @@ public class PenroseStairsSideMesh : MonoBehaviour {
 
            6,1,0,
            1,6,7,
+
+           2,3,4,
+           5,4,3,
         },0);
+        mesh.RecalculateBounds();
         return mesh;
     }
 

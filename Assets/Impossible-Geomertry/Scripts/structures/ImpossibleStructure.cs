@@ -49,7 +49,6 @@ public class ImpossibleStructure {
         if (nodes.Count > 2)
         {
 
-            //presumes standard impossible shape
             List<Vector3> points = GetPointsInCameraSpace(camera);
 
             //intersection of ends, in the directions of begining and end of segment structure
@@ -61,7 +60,6 @@ public class ImpossibleStructure {
             }
        
             Vector2 intersection = (Vector2)intersectionResult;
-            // intersection = ShrinkBackPoint(intersection, points[0], points[points.Count - 1]);
 
             // stitch result into start and end points, in camera space, thus -1 z
             points[0] = new Vector3(intersection.x, intersection.y, -1);
@@ -110,6 +108,7 @@ public class ImpossibleStructure {
         else return Vector3.Normalize(nodes[nodes.Count - 1] - nodes[0]);
     }
 
+
     #endregion
 
 #region private fields
@@ -139,6 +138,7 @@ public class ImpossibleStructure {
         Vector3 dir2 = (p2b - p2a).normalized;
         float u = (p1a.y * dir2.x + dir2.y * p2a.x - p2a.y * dir2.x - dir2.y * p1a.x) / (dir1.x * dir2.y - dir1.y * dir2.x);
         float v = (p1a.x + dir1.x * u - p2a.x) / dir2.x;
+        if (v == float.NegativeInfinity) v = float.PositiveInfinity;
         if (!(u > 0 && v > 0)) return null;
         // if yes use line line intersect to find resulting intersection point
         else return new Vector2(((((p1a.x * p1b.y) - (p1a.y * p1b.x)) * (p2a.x - p2b.x)) - ((p1a.x - p1b.x) * ((p2a.x * p2b.y) - (p2a.y * p2b.x)))) /
