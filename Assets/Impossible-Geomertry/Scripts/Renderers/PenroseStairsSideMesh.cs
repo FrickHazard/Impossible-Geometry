@@ -9,6 +9,7 @@ public class PenroseStairsSideMesh : MonoBehaviour {
     public float StepWidth = 1f;
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
+    private bool flipped = false;
 
     void Start()
     {
@@ -19,6 +20,17 @@ public class PenroseStairsSideMesh : MonoBehaviour {
     private void Update()
     {
         DivideSideIntoSteps();
+    }
+
+    public void SetStair(Vector3 position, Vector3 stairVector)
+    {
+        if (stairVector.y < 0)
+        {
+            flipped = true;
+        }
+        else flipped = false;
+        transform.position = position;
+        EndPoint = stairVector;
     }
 
     private void DivideSideIntoSteps()
@@ -53,7 +65,7 @@ public class PenroseStairsSideMesh : MonoBehaviour {
         filter.mesh.CombineMeshes(combine);
     }
 
-    public Mesh CreateStairCube(Vector3 start, Vector3 end, Vector3 up)
+    private Mesh CreateStairCube(Vector3 start, Vector3 end, Vector3 up)
     {
         Mesh mesh = new Mesh();
         mesh.MarkDynamic();
@@ -64,7 +76,10 @@ public class PenroseStairsSideMesh : MonoBehaviour {
         Vector3 right = Vector3.Normalize(Vector3.Cross(direction.normalized, up));
         up = Vector3.Project(direction, up);
         right *= StepWidth / 2;
-
+        if (flipped)
+        {
+            up = -up;
+        }
 
         mesh.SetVertices(new List<Vector3>() {
           start + right + up,
