@@ -24,6 +24,7 @@ public class PenroseStairsSideMesh : MonoBehaviour {
 
     public void SetStair(Vector3 position, Vector3 stairVector)
     {
+        // ASSUMPTION, Y IS UP, could chnage to dot test against up vector.
         if (stairVector.y < 0)
         {
             flipped = true;
@@ -35,6 +36,7 @@ public class PenroseStairsSideMesh : MonoBehaviour {
 
     private void DivideSideIntoSteps()
     {
+        //IS SAME AS ENDPOINT CURRENTLY
         Vector3 baseVector = EndPoint - StartPoint;
         int stairCount = Mathf.CeilToInt(baseVector.magnitude / LengthOfStep);
         Vector3[] points = new Vector3[stairCount + 1];
@@ -48,6 +50,7 @@ public class PenroseStairsSideMesh : MonoBehaviour {
         List<Mesh> meshes = new List<Mesh>();
         for (int i = 0; i < points.Length - 1; i++ )
         {
+            // ASSUMPTION, Y IS UP
             meshes.Add(CreateStairCube(points[i], points[i + 1], Vector3.up));
         }
         CombineMeshes(meshes);
@@ -76,6 +79,7 @@ public class PenroseStairsSideMesh : MonoBehaviour {
         Vector3 right = Vector3.Normalize(Vector3.Cross(direction.normalized, up));
         up = Vector3.Project(direction, up);
         right *= StepWidth / 2;
+        // FLIPPED STAIR WAYS REVERSE DIRECTION
         if (flipped)
         {
             up = -up;
