@@ -78,12 +78,20 @@ public static class SurfaceUtility {
                     new Vector2(0, 1),
                     new Vector2(1, 1),
                 });
+
+                normals.AddRange(new List<Vector3>() {
+                    planeNormal,
+                    planeNormal,
+                    planeNormal,
+                    planeNormal
+                });
             }
         }
 
         mesh.SetVertices(vertices);
         mesh.SetTriangles(triangles, 0);
         mesh.SetUVs(0, uvs);
+        mesh.SetNormals(normals);
         return mesh;
 
     }
