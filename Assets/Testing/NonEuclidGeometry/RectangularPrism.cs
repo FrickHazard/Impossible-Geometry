@@ -17,12 +17,12 @@ public class RectangularPrism : MonoBehaviour {
     public bool ShowCeiling;
     public bool ShowFloor;
 
-    DynamicMesh FrontWall;
-    DynamicMesh BackWall;
-    DynamicMesh RightWall;
-    DynamicMesh LeftWall;
-    DynamicMesh Ceiling;
-    DynamicMesh Floor;
+    RectangularSurface FrontWall;
+    RectangularSurface BackWall;
+    RectangularSurface RightWall;
+    RectangularSurface LeftWall;
+    RectangularSurface Ceiling;
+    RectangularSurface Floor;
 
 	void Start () {
         FrontWall = SetUpMeshObject("Front Wall");
@@ -54,18 +54,19 @@ public class RectangularPrism : MonoBehaviour {
        Vector3 rightOffset = Vector3.right * (Width / 2);
        Vector3 forwardOffset = Vector3.forward * (Length / 2);
 
-       FrontWall.SetMesh(SurfaceUtility.BuildRectangle((Vector3.forward * Length) - topOffset, (Vector3.forward * Length) + (topOffset), Width, SegmentDistance, -Vector3.forward));
-       BackWall.SetMesh(SurfaceUtility.BuildRectangle(Vector3.zero - topOffset, Vector3.zero + (topOffset), Width, SegmentDistance, Vector3.forward));
-       RightWall.SetMesh(SurfaceUtility.BuildRectangle(Vector3.zero + rightOffset, rightOffset + (Vector3.forward * Length), Height, SegmentDistance, -Vector3.right));
-       LeftWall.SetMesh(SurfaceUtility.BuildRectangle(Vector3.zero - rightOffset, -rightOffset + (Vector3.forward * Length), Height, SegmentDistance, Vector3.right));
-       Ceiling.SetMesh(SurfaceUtility.BuildRectangle(Vector3.zero + topOffset, topOffset + (Vector3.forward * Length), Width, SegmentDistance, -Vector3.up));
-       Floor.SetMesh(SurfaceUtility.BuildRectangle(Vector3.zero - topOffset, -topOffset + (Vector3.forward * Length), Width, SegmentDistance, Vector3.up));
+       FrontWall.SetMesh((Vector3.forward * Length) - topOffset, (Vector3.forward * Length) + (topOffset), Width, SegmentDistance, -Vector3.forward);
+       BackWall.SetMesh(Vector3.zero - topOffset, Vector3.zero + (topOffset), Width, SegmentDistance, Vector3.forward);
+       RightWall.SetMesh(Vector3.zero + rightOffset, rightOffset + (Vector3.forward * Length), Height, SegmentDistance, -Vector3.right);
+       LeftWall.SetMesh(Vector3.zero - rightOffset, -rightOffset + (Vector3.forward * Length), Height, SegmentDistance, Vector3.right);
+       Ceiling.SetMesh(Vector3.zero + topOffset, topOffset + (Vector3.forward * Length), Width, SegmentDistance, -Vector3.up);
+       Floor.SetMesh(Vector3.zero - topOffset, -topOffset + (Vector3.forward * Length), Width, SegmentDistance, Vector3.up);
     }
 
-    private DynamicMesh SetUpMeshObject(string name)
+    private RectangularSurface SetUpMeshObject(string name)
     {
-        var result = new GameObject(name).AddComponent<DynamicMesh>();
+        var result = new GameObject(name).AddComponent<RectangularSurface>();
         result.SetMaterial(material);
+        result.transform.SetPositionAndRotation(transform.position, transform.rotation);
         result.transform.parent = transform;
         return result;
     }

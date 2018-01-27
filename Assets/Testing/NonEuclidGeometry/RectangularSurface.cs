@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DynamicMesh : MonoBehaviour {
+public class RectangularSurface : MonoBehaviour {
 
     public bool Visible = true;
 
@@ -20,9 +20,9 @@ public class DynamicMesh : MonoBehaviour {
         meshRenderer.enabled = visible;
     }
 
-    public void SetMesh(Mesh mesh)
+    public void SetMesh(Vector3 start, Vector3 end, float width, float segmentDistance, Vector3 normal)
     {
-        meshFilter.mesh = mesh;
+        meshFilter.mesh = SurfaceUtility.BuildRectangle(start, end , width, segmentDistance, normal);
     }
 
     public void SetMaterial(Material material)

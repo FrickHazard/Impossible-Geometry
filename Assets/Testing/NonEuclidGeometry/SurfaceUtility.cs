@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -94,5 +95,10 @@ public static class SurfaceUtility {
         mesh.SetNormals(normals);
         return mesh;
 
+    }
+
+    public static Mesh BuildRectangle(Vector3 center, float width, float length, float segmentDistance, Vector3 planeNormal)
+    {
+        throw new NotImplementedException("Function not implemented");
     }
 }
