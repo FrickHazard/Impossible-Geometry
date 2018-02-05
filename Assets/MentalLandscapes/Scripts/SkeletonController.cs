@@ -67,11 +67,10 @@ public class SkeletonController : MonoBehaviour
 
         cam.transform.localEulerAngles = new Vector3(cam.transform.localEulerAngles.x, 0,0);
    
-
-
-        if (Input.GetKey(KeyCode.Space)) { Jump(); }
-
-
+        if (Input.GetKey(KeyCode.Space))
+        {
+            Jump();
+        }
     }
 
     void Jump()

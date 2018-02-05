@@ -1,8 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class BezierCurve {
+public class BezierCurve
+{
 
 
     public List<Vector3> Points;
@@ -28,6 +31,16 @@ public class BezierCurve {
         else return loop[0];
     }
 
+    public Vector3 GetCentroid()
+    {
+        Vector3 centroid = Vector3.zero;
+        for (int i = 0; i < Points.Count; i++)
+        {
+            centroid += Points[i];
+        }
+        return centroid /= Points.Count;
+    }
+
 
     public void DebugDraw(Color color, float duration)
     {
@@ -40,4 +53,16 @@ public class BezierCurve {
             prevPoint = point;
         }
     }
+
+    public void DebugDrawControlPolygon(Color color, float duration)
+    {
+        Vector3 prevPoint = Points[0];
+        for (int i = 1; i < Points.Count; i++)
+        {
+            Debug.DrawLine(prevPoint, Points[i], color, duration);
+            prevPoint = Points[i];
+        }
+        Debug.DrawLine(prevPoint, Points[0], color, duration);
+    }
+
 }

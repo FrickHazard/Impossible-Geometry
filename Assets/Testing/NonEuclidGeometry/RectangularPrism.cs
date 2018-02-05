@@ -31,10 +31,10 @@ public class RectangularPrism : MonoBehaviour {
         LeftWall = SetUpMeshObject("Left Wall");
         Ceiling = SetUpMeshObject("Ceiling");
         Floor = SetUpMeshObject("Floor");
+        Build();
     }
 	
 	void Update () {
-        Build();
         UpdateVisibility();
     }
 
@@ -54,12 +54,12 @@ public class RectangularPrism : MonoBehaviour {
        Vector3 rightOffset = Vector3.right * (Width / 2);
        Vector3 forwardOffset = Vector3.forward * (Length / 2);
 
-       FrontWall.SetMesh((Vector3.forward * Length) - topOffset, (Vector3.forward * Length) + (topOffset), Width, SegmentDistance, -Vector3.forward);
-       BackWall.SetMesh(Vector3.zero - topOffset, Vector3.zero + (topOffset), Width, SegmentDistance, Vector3.forward);
-       RightWall.SetMesh(Vector3.zero + rightOffset, rightOffset + (Vector3.forward * Length), Height, SegmentDistance, -Vector3.right);
-       LeftWall.SetMesh(Vector3.zero - rightOffset, -rightOffset + (Vector3.forward * Length), Height, SegmentDistance, Vector3.right);
-       Ceiling.SetMesh(Vector3.zero + topOffset, topOffset + (Vector3.forward * Length), Width, SegmentDistance, -Vector3.up);
-       Floor.SetMesh(Vector3.zero - topOffset, -topOffset + (Vector3.forward * Length), Width, SegmentDistance, Vector3.up);
+       FrontWall.SetBaseMesh((Vector3.forward * Length) - topOffset, (Vector3.forward * Length) + (topOffset), Width, SegmentDistance, -Vector3.forward);
+       BackWall.SetBaseMesh(Vector3.zero - topOffset, Vector3.zero + (topOffset), Width, SegmentDistance, Vector3.forward);
+       RightWall.SetBaseMesh(Vector3.zero + rightOffset, rightOffset + (Vector3.forward * Length), Height, SegmentDistance, -Vector3.right);
+       LeftWall.SetBaseMesh(Vector3.zero - rightOffset, -rightOffset + (Vector3.forward * Length), Height, SegmentDistance, Vector3.right);
+       Ceiling.SetBaseMesh(Vector3.zero + topOffset, topOffset + (Vector3.forward * Length), Width, SegmentDistance, -Vector3.up);
+       Floor.SetBaseMesh(Vector3.zero - topOffset, -topOffset + (Vector3.forward * Length), Width, SegmentDistance, Vector3.up);
     }
 
     private RectangularSurface SetUpMeshObject(string name)
