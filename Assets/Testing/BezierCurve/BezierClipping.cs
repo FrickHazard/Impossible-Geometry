@@ -40,7 +40,7 @@ public static class BezierClipping {
 
         float[] distances = new float[curve.Points.Count];
 
-        //fat lines for curve
+        //since perpendicular much harder to get perpendicular fat line
         for (int i = 0; i < curve.Points.Count; i++)
         {
             distances[i] = StandardLineFormulaDistance(firstPoint, lastPoint, curve.Points[i]);
@@ -61,6 +61,7 @@ public static class BezierClipping {
         Vector2 firstPoint = curve.Points[0];
         Vector2 lastPoint = curve.Points[curve.Points.Count - 1];
 
+        if(firstPoint == lastPoint) throw new ArgumentException("Bezier Curve start must not equal end");
         // line has no thickness
         if (curve.Points.Count == 2) return new FatLine(firstPoint, lastPoint, 0, 0);
 

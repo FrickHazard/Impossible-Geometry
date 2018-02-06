@@ -7,12 +7,14 @@ public class BezierTesting : MonoBehaviour {
     public Vector3 point1;
     public Vector3 point2;
     public Vector3 point3;
+    public Vector3 point4;
+    public Vector3 point5;
 
     BezierCurve curve;
     // Use this for initialization
     void Start () {
         curve = new BezierCurve(new List<Vector3>() {
-            point1, point2, point3
+            point1, point2, point3, point4, point5
         });
         
     }
@@ -20,7 +22,7 @@ public class BezierTesting : MonoBehaviour {
     void Update()
     {
         curve = new BezierCurve(new List<Vector3>() {
-            point1, point2, point3
+            point1, point2, point3, point4, point5
         });
         curve.DebugDraw(Color.blue, Time.deltaTime);
         // curve.DebugDrawControlPolygon(Color.green, Time.deltaTime);
