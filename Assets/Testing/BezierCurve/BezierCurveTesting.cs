@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BezierTesting : MonoBehaviour {
+public class BezierCurveTesting : MonoBehaviour {
 
     public Vector3 point1;
     public Vector3 point2;
@@ -16,7 +16,6 @@ public class BezierTesting : MonoBehaviour {
         curve = new BezierCurve(new List<Vector3>() {
             point1, point2, point3, point4, point5
         });
-        
     }
 
     void Update()
@@ -49,8 +48,6 @@ public class BezierTesting : MonoBehaviour {
             {
                 Gizmos.DrawWireSphere(curve.Points[i], 1/20f);
             }
-            
         }
     }
-
 }
