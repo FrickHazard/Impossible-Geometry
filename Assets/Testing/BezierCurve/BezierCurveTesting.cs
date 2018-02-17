@@ -35,8 +35,6 @@ public class BezierCurveTesting : MonoBehaviour {
         Vector2 cross2 = -Vector3.Cross(fatLine2.Point2 - fatLine2.Point1, Vector3.forward).normalized;
         Debug.DrawLine(fatLine2.Point1 + (cross2 * fatLine2.Min), fatLine2.Point2 + (cross2 * fatLine2.Min));
         Debug.DrawLine(fatLine2.Point1 + (cross2 * fatLine2.Max), fatLine2.Point2 + (cross2 * fatLine2.Max));
-
-      
     }
 
     private void OnDrawGizmos()
@@ -46,6 +44,9 @@ public class BezierCurveTesting : MonoBehaviour {
             Gizmos.DrawWireCube(curve.GetCentroid(), Vector3.one / 15f);
             for (int i = 0; i < curve.Points.Count; i++)
             {
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireSphere(curve.GetOnSurfaceControlPoint(i), 1 / 14f);
+                Gizmos.color = Color.white;
                 Gizmos.DrawWireSphere(curve.Points[i], 1/20f);
             }
         }

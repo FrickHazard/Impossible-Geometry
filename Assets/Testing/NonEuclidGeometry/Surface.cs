@@ -5,10 +5,72 @@ using UnityEngine;
 
 public class Surface {
 
-    public BezierCurve[] Loops;
+    public BezierSurface bezierSurface;
+    public Mesh mesh;
+    public float ResolutionPerWorldUnit;
 
-    public void SetLoops(BezierCurve[] curves)
+    public Surface(BezierSurface bezierSurface, float resolutionPerWorldUnit)
     {
-
+        this.bezierSurface = bezierSurface;
+        mesh = new Mesh();
+        mesh.MarkDynamic();
+        ResolutionPerWorldUnit = resolutionPerWorldUnit;
     }
+
+    public Mesh BuildMesh()
+    {
+        Vector3[][,] patchPointGroups = bezierSurface.GetControlPointSurfacePatches(ResolutionPerWorldUnit);
+
+        int totalVertLength = 0;
+        int totalTriangleLength = 0;
+        for (int i = 0; i < patchPointGroups.Length; i++)
+        {
+            totalVertLength += patchPointGroups[i].Length;
+            totalTriangleLength += ((patchPointGroups[i].GetLength(0) - 1) * (patchPointGroups[i].GetLength(1) -1) * 2) * 3;
+        }
+        Vector3[] verts = new Vector3[totalVertLength];
+        int[] triangles = new int[totalTriangleLength];
+        int vertIndex = 0;
+        int triangleIndex = 0;
+        int verticePatchShift = 0;
+        for (int i = 0; i < patchPointGroups.Length; i++)
+        {
+            for (int j = 0; j < patchPointGroups[i].GetLength(0); j++)
+            {
+                for (int k = 0; k < patchPointGroups[i].GetLength(1); k++)
+                {
+                    //triagle vert
+                  if (k != patchPointGroups[i].GetLength(1) -1 && (j != patchPointGroups[i].GetLength(0) - 1))
+                  {
+                        //jk
+                        //j + 1 k
+                        //j k +1
+
+                        //j + 1 k
+                        // j + 1, k +1
+                        //j k+1
+                        int offsetPerJ = patchPointGroups[i].GetLength(1);
+                        int offset = verticePatchShift + (j * patchPointGroups[i].GetLength(1));
+                        triangles[triangleIndex + 0] = offset + k;
+                        triangles[triangleIndex + 1] = offset + (1 * offsetPerJ) + k;
+                        triangles[triangleIndex + 2] = offset + (k + 1);
+                        triangles[triangleIndex + 3] = offset + (1 * offsetPerJ) + k;
+                        triangles[triangleIndex + 4] = offset + (1 * offsetPerJ) + (k + 1);
+                        triangles[triangleIndex + 5] = offset + (k + 1);
+                        triangleIndex += 6;
+                    }
+                  verts[vertIndex] = patchPointGroups[i][j, k];
+                  vertIndex++;
+                }
+            }
+            verticePatchShift += vertIndex;
+        }
+        mesh.triangles = triangles;
+        mesh.vertices = verts;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+
 }

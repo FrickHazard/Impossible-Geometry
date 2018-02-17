@@ -16,7 +16,7 @@ public class Orbit : MonoBehaviour
     public float distanceMin = .5f;
     public float distanceMax = 15f;
 
-    private Rigidbody rigidbody;
+    private Rigidbody orbitRigidbody;
     private bool stopped = false;
 
     float x = 0.0f;
@@ -29,12 +29,12 @@ public class Orbit : MonoBehaviour
         x = angles.y;
         y = angles.x;
 
-        rigidbody = GetComponent<Rigidbody>();
+        orbitRigidbody = GetComponent<Rigidbody>();
 
         // Make the rigid body not change rotation
-        if (rigidbody != null)
+        if (orbitRigidbody != null)
         {
-            rigidbody.freezeRotation = true;
+            orbitRigidbody.freezeRotation = true;
         }
     }
 

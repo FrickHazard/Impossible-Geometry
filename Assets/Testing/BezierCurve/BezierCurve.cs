@@ -20,6 +20,13 @@ public class BezierCurve
         return BezierLerpLoop(Points, t);
     }
 
+    public Vector3 GetOnSurfaceControlPoint(int index)
+    {
+        if (index < 0 || index > Points.Count - 1) throw new ArgumentOutOfRangeException("Index was out of range");
+        float indexPercent = (float)index / (float)(Points.Count - 1);
+        return GetPoint(indexPercent);
+    }
+
     private Vector3 BezierLerpLoop(List<Vector3> points, float percent)
     {
         List<Vector3> loop = new List<Vector3>();

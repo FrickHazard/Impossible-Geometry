@@ -39,7 +39,6 @@ public class RectangularSurface : MonoBehaviour {
         List<Vector3> verts = new List<Vector3>();
         for (int i = 0; i < meshFilter.mesh.vertices.Length; i++)
         {
-            if (meshFilter.mesh.vertices[i] == null) continue;
             Vector3 vertWorldPosition = transform.TransformPoint(meshFilter.mesh.vertices[i]);
             Vector3 direction = (vertWorldPosition - center).normalized;
             verts.Add(transform.InverseTransformPoint(vertWorldPosition + (direction / Vector3.Distance(vertWorldPosition, center) * radius)));
