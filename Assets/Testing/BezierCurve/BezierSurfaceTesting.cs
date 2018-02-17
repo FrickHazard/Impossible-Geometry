@@ -17,6 +17,7 @@ public class BezierSurfaceTesting : MonoBehaviour
 
     MeshFilter filter;
     BezierSurface surface;
+    Surface surf;
     // Use this for initialization
     void Start()
     {
@@ -32,7 +33,7 @@ public class BezierSurfaceTesting : MonoBehaviour
         points[1, 2] = point8;
         points[2, 2] = point9;
         surface = new BezierSurface(points);
-        Surface surf = new Surface(surface, 0.2f);
+        surf = new Surface(surface, 0.5f);
         Mesh result = surf.BuildMesh();
         filter.mesh = result;
     }
@@ -49,40 +50,47 @@ public class BezierSurfaceTesting : MonoBehaviour
     {
         // show surface points
         if (surface != null)
-        {
-            //i and j are resolution
-            for (int i = 0; i < 10; i++)
+            //    {
+            //        //i and j are resolution
+            //        for (int i = 0; i < 10; i++)
+            //        {
+            //            for (int j = 0; j < 10; j++)
+            //            {
+            //                float uPercent = (float)i / 9f;
+            //                float vPercent = (float)j / 9f;
+            //                Gizmos.DrawWireSphere(surface.GetPoint(uPercent, vPercent), 1 / 20f);
+            //            }
+            //        }
+
+            //        // show control points
+            //        for (int i = 0; i < surface.ULength; i++)
+            //        {
+            //            for (int j = 0; j < surface.VLength; j++)
+            //            {
+            //                Gizmos.color = Color.red;
+            //                Gizmos.DrawWireSphere(surface.GetOnSurfaceControlPoint(i, j), 1 / 20f);
+            //                Gizmos.color = Color.white;
+            //            }
+            //        }
+
+            //        Gizmos.color = Color.green;
+            //        Gizmos.DrawWireCube(point1, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point2, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point3, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point4, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point5, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point6, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point7, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point8, Vector3.one * (1f / 20f));
+            //        Gizmos.DrawWireCube(point9, Vector3.one * (1f / 20f));
+            //        Gizmos.color = Color.white;
+
+            if (filter.mesh)
             {
-                for (int j = 0; j < 10; j++)
+                for (int i = 0; i < filter.mesh.vertices.Length; i++)
                 {
-                    float uPercent = (float)i / 9f;
-                    float vPercent = (float)j / 9f;
-                    Gizmos.DrawWireSphere(surface.GetPoint(uPercent, vPercent), 1 / 20f);
+                    Gizmos.DrawWireCube(filter.mesh.vertices[i], Vector3.one * (1f / 20f));
                 }
             }
-
-            // show control points
-            for (int i = 0; i < surface.ULength; i++)
-            {
-                for (int j = 0; j < surface.VLength; j++)
-                {
-                    Gizmos.color = Color.red;
-                    Gizmos.DrawWireSphere(surface.GetOnSurfaceControlPoint(i, j), 1 / 20f);
-                    Gizmos.color = Color.white;
-                }
-            }
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireCube(point1, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point2, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point3, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point4, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point5, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point6, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point7, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point8, Vector3.one * (1f / 20f));
-            Gizmos.DrawWireCube(point9, Vector3.one * (1f / 20f));
-            Gizmos.color = Color.white;
-        }
     }
 }

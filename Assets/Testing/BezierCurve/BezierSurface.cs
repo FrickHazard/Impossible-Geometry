@@ -118,10 +118,12 @@ public class BezierSurface
           rows[i] = (SplitSegment(ULowerSegment[i].UCoord, ULowerSegment[i].VCoord, UUpperSegment[i].UCoord, UUpperSegment[i].VCoord, resolution));
         }
         BezierSurfacePointData[] longestResult = rows[0];
+        // get longest row
         for (int i = 0; i < rows.Length; i++)
         {
             if (rows[i].Length > longestResult.Length) longestResult = rows[i];
         }
+        // enforce size
         for (int i = 0; i < rows.Length; i++)
         {
             if (rows[i] != longestResult)
@@ -129,6 +131,7 @@ public class BezierSurface
                 rows[i] = EnforceHighestResolutionAlongV(rows[i], longestResult);
             }
         }
+        //assemble result
         Vector3[,] result = new Vector3[rows.Length, rows[0].Length];
         for (int i = 0; i < rows.Length; i++)
         {
@@ -155,7 +158,7 @@ public class BezierSurface
             return new BezierSurfacePointData[] 
             {
                 new BezierSurfacePointData(point1, UT1, VT1),
-                new BezierSurfacePointData(point1, UT2, VT2)
+                new BezierSurfacePointData(point2, UT2, VT2)
             };
         }
 
@@ -231,7 +234,7 @@ public class BezierSurface
         {
             float enforcerVcoord = enforcer[emptyIndices[i]].VCoord;
             // input should have all same v coords, same as enforcer
-            result[emptyIndices[i]] = new BezierSurfacePointData(GetPoint(enforcerVcoord, input[0].UCoord), enforcerVcoord, input[0].UCoord);
+            result[emptyIndices[i]] = new BezierSurfacePointData(GetPoint(input[0].UCoord, enforcerVcoord), input[0].UCoord, enforcerVcoord);
         }
         return result;
     }
