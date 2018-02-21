@@ -288,9 +288,9 @@ public class BezierSurface
         return BinomialCoefficient(n, k) * Mathf.Pow((1 - t), (n - k)) * Mathf.Pow(t, k) * v;
     }
 
-    public Vector3 BezierFormula(Vector3[] controlPoints, float t)
+    public static Vector3 BezierFormula(Vector3[] controlPoints, float t)
     {
-        float n = controlPoints.Length;
+        float n = controlPoints.Length - 1;
         Vector3 result = Vector3.zero;
         for (int i = 0; i < controlPoints.Length; i++)
         {
