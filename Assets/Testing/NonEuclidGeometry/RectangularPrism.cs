@@ -52,7 +52,6 @@ public class RectangularPrism : MonoBehaviour {
     {
        Vector3 topOffset = Vector3.up * (Height / 2);
        Vector3 rightOffset = Vector3.right * (Width / 2);
-       Vector3 forwardOffset = Vector3.forward * (Length / 2);
 
        FrontWall.SetBaseMesh((Vector3.forward * Length) - topOffset, (Vector3.forward * Length) + (topOffset), Width, SegmentDistance, -Vector3.forward);
        BackWall.SetBaseMesh(Vector3.zero - topOffset, Vector3.zero + (topOffset), Width, SegmentDistance, Vector3.forward);

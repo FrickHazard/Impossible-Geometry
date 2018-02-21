@@ -50,17 +50,18 @@ public class BezierSurfaceTesting : MonoBehaviour
     {
         // show surface points
         if (surface != null)
+        {
+            //i and j are resolution
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    for (int j = 0; j < 10; j++)
             //    {
-            //        //i and j are resolution
-            //        for (int i = 0; i < 10; i++)
-            //        {
-            //            for (int j = 0; j < 10; j++)
-            //            {
-            //                float uPercent = (float)i / 9f;
-            //                float vPercent = (float)j / 9f;
-            //                Gizmos.DrawWireSphere(surface.GetPoint(uPercent, vPercent), 1 / 20f);
-            //            }
-            //        }
+            //        float uPercent = (float)i / 9f;
+            //        float vPercent = (float)j / 9f;
+            //        Debug.DrawRay(surface.GetPoint(uPercent, vPercent), surface.GetTangent(uPercent, vPercent), Color.red, 1f);
+            //        Gizmos.DrawWireSphere(surface.GetPoint(uPercent, vPercent), 1 / 20f);
+            //    }
+            //}
 
             //        // show control points
             //        for (int i = 0; i < surface.ULength; i++)
@@ -85,12 +86,13 @@ public class BezierSurfaceTesting : MonoBehaviour
             //        Gizmos.DrawWireCube(point9, Vector3.one * (1f / 20f));
             //        Gizmos.color = Color.white;
 
-            if (filter.mesh)
-            {
-                for (int i = 0; i < filter.mesh.vertices.Length; i++)
-                {
-                    Gizmos.DrawWireCube(filter.mesh.vertices[i], Vector3.one * (1f / 20f));
-                }
-            }
+            //if (filter.mesh)
+            //{
+            //    for (int i = 0; i < filter.mesh.vertices.Length; i++)
+            //    {
+            //        Gizmos.DrawWireCube(filter.mesh.vertices[i], Vector3.one * (1f / 20f));
+            //    }
+            //}
+        }
     }
 }

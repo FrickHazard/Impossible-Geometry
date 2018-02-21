@@ -9,8 +9,6 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
     public StencilWriter StencilWriterPrefab;
     public StencilReader StencilReaderPrefab;
     public StencilClearer StencilClearerPrefab;
-    private MeshFilter filter;
-    private MeshRenderer meshRenderer;
     public Color UpColor = Color.blue;
     public Color RightColor = Color.red;
     public Color FowardColor = Color.green;
@@ -22,8 +20,6 @@ public class ImpossibleStructureRenderer : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        filter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
         structure = NavigationBoard.ActiveStructure;
         SetObjectPool(structure);
     }

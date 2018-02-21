@@ -24,7 +24,7 @@ public class SkeletonController : MonoBehaviour
     protected Rigidbody rigid;
     protected CapsuleCollider capsuleCollider;
 
-    private float _startDynamicFriction;
+    private float _startDynamicFriction = 0f;
 
     // Use this for initialization
     void Start()

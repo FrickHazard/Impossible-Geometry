@@ -19,16 +19,18 @@ public class Surface {
 
     public Mesh BuildMesh()
     {
-        Vector3[][,] patchPointGroups = bezierSurface.GetControlPointSurfacePatches(ResolutionPerWorldUnit);
+        BezierSurfacePointData[][,] patchPointGroups = bezierSurface.GetControlPointSurfacePatches(ResolutionPerWorldUnit);
 
         int totalVertLength = 0;
         int totalTriangleLength = 0;
+        // get length
         for (int i = 0; i < patchPointGroups.Length; i++)
         {
             totalVertLength += patchPointGroups[i].Length;
             totalTriangleLength += ((patchPointGroups[i].GetLength(0) - 1) * (patchPointGroups[i].GetLength(1) -1)) * 6;
         }
         Vector3[] verts = new Vector3[totalVertLength];
+        Vector3[] norms = new Vector3[totalVertLength];
         int[] triangles = new int[totalTriangleLength];
         int vertIndex = 0;
         int triangleIndex = 0;
@@ -44,15 +46,17 @@ public class Surface {
                   {
                         int offsetPerJ = patchPointGroups[i].GetLength(1);
                         int offset = verticePatchShift + (j * offsetPerJ);
-                        triangles[triangleIndex + 0] = offset + (1 * offsetPerJ) + (k + 1);
+                        triangles[triangleIndex + 0] = offset + k;
                         triangles[triangleIndex + 1] = offset + (1 * offsetPerJ) + k;
-                        triangles[triangleIndex + 2] = offset + k;
-                        triangles[triangleIndex + 3] = offset + k;
+                        triangles[triangleIndex + 2] = offset + (1 * offsetPerJ) + (k + 1);
+
+                        triangles[triangleIndex + 3] = offset + (1 * offsetPerJ) + (k + 1);
                         triangles[triangleIndex + 4] = offset + (k + 1);
-                        triangles[triangleIndex + 5] = offset + (1 * offsetPerJ) + (k + 1);
+                        triangles[triangleIndex + 5] = offset + k;
                         triangleIndex += 6;
-                    }
-                  verts[vertIndex] = patchPointGroups[i][j, k];
+                   }
+                  verts[vertIndex] = patchPointGroups[i][j, k].Point ;
+                  norms[vertIndex] = patchPointGroups[i][j, k].Normal;
                   vertIndex++;
                 }
             }
@@ -60,7 +64,7 @@ public class Surface {
         }
         mesh.vertices = verts;
         mesh.triangles = triangles;
-        mesh.RecalculateNormals();
+        mesh.normals = norms;
         mesh.RecalculateBounds();
         return mesh;
     }

@@ -8,13 +8,11 @@ public class PenroseStairsSideMesh : MonoBehaviour {
     public float LengthOfStep;
     public float StepWidth = 1f;
     private MeshFilter filter;
-    private MeshRenderer meshRenderer;
     private bool flipped = false;
 
     void Start()
     {
         filter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
     }
 
     private void Update()
