@@ -133,39 +133,33 @@ public class BezierSurface
     {
         if (indexU1 < 0 || indexU1 > Grid.GetLength(0) - 2) throw new ArgumentOutOfRangeException("Square indice must be in range.");
         if (indexV1 < 0 || indexV1 > Grid.GetLength(1) - 2) throw new ArgumentOutOfRangeException("Square indice must be in range.");
+        float[] segmentUVs = new float[8] {
+            GetUIndexToT(indexU1),
+            GetVIndexToT(indexV1),
+            GetUIndexToT(indexU1 + 1),
+            GetVIndexToT(indexV1),
 
-        BezierSurfacePointData[] ULowerSegment = SubDivideControlPointSegment(indexU1, indexV1, indexU1 + 1, indexV1, resolution);
-        BezierSurfacePointData[] UUpperSegment = SubDivideControlPointSegment(indexU1, indexV1 + 1, indexU1 + 1, indexV1 + 1, resolution);
+            GetUIndexToT(indexU1),
+            GetVIndexToT(indexV1 + 1),
+            GetUIndexToT(indexU1 + 1),
+            GetVIndexToT(indexV1 + 1),
+        };
 
-        // make sure main iterate has highest u v resolution
-        if (ULowerSegment.Length < UUpperSegment.Length)
-        {
-            ULowerSegment = EnforceHighestResolutionAlongU(ULowerSegment, UUpperSegment);
-        }
-        else UUpperSegment = EnforceHighestResolutionAlongU(UUpperSegment, ULowerSegment);
-        BezierSurfacePointData[][] rows = new BezierSurfacePointData[ULowerSegment.Length][];
+        BezierSurfacePointData[][] upperAndLowerSegmentLoops = SplitSegmentsAndEnforceResolution(segmentUVs, resolution);
 
-        // merge segments
-        for (int i = 0; i < ULowerSegment.Length; i++)
+        float[] secondUVGroup = new float[(upperAndLowerSegmentLoops[0].Length + upperAndLowerSegmentLoops[1].Length) * 2];
+
+        // both arrays are same size
+        for (int j = 0; j < upperAndLowerSegmentLoops[0].Length; j++)
         {
-          rows[i] = (SplitSegment(ULowerSegment[i].UCoord, ULowerSegment[i].VCoord, UUpperSegment[i].UCoord, UUpperSegment[i].VCoord, resolution));
+            secondUVGroup[0 + (j * 4)] = upperAndLowerSegmentLoops[0][j].UCoord;
+            secondUVGroup[1 + (j * 4)] = upperAndLowerSegmentLoops[0][j].VCoord;
+            secondUVGroup[2 + (j * 4)] = upperAndLowerSegmentLoops[1][j].UCoord;
+            secondUVGroup[3 + (j * 4)] = upperAndLowerSegmentLoops[1][j].VCoord;
         }
-        BezierSurfacePointData[] longestResult = rows[0];
-        // get longest row
-        for (int i = 0; i < rows.Length; i++)
-        {
-            if (rows[i].Length > longestResult.Length) longestResult = rows[i];
-        }
-        // enforce size
-        for (int i = 0; i < rows.Length; i++)
-        {
-            if (rows[i] != longestResult)
-            {
-                rows[i] = EnforceHighestResolutionAlongV(rows[i], longestResult);
-            }
-        }
-        //assemble result
-        BezierSurfacePointData[,] result = new BezierSurfacePointData[rows.Length, rows[0].Length];
+        BezierSurfacePointData[][] rows = SplitSegmentsAndEnforceResolution(secondUVGroup, resolution);
+       //assemble result
+       BezierSurfacePointData[,] result = new BezierSurfacePointData[rows.Length, rows[0].Length];
         for (int i = 0; i < rows.Length; i++)
         {
             for (int j = 0; j < rows[i].Length; j++)
@@ -212,65 +206,80 @@ public class BezierSurface
         return combinedSegments;
     }
 
-    private BezierSurfacePointData[] EnforceHighestResolutionAlongU(BezierSurfacePointData[] input, BezierSurfacePointData[] enforcer)
+    //either do this or use binary tree ¯\_(ツ)_/¯, its confusing
+    private BezierSurfacePointData[][] SplitSegmentsAndEnforceResolution(float[] UVGroups, float resolution)
     {
-        if (input[0].UCoord != enforcer[0].UCoord) throw new ArgumentOutOfRangeException("Input and Enforcer bezier loop must refer to same base U coords");
-        if (input.Length > enforcer.Length) throw new ArgumentOutOfRangeException("Enforcer Must have higher resolution");
-        BezierSurfacePointData[] result = new BezierSurfacePointData[enforcer.Length];
-        int[] emptyIndices = new int[enforcer.Length - input.Length];
-        int inputIndex = 0;
-        int emptyIndiceCount = 0;
-        for (int i = 0; i < enforcer.Length; i++)
+        int segmentLength = UVGroups.Length / 4;
+        bool subDivide = false;
+        for (int i = 0; i < segmentLength; i++)
         {
-            if (enforcer[i].UCoord == input[inputIndex].UCoord)
-            {
-                result[i] = input[inputIndex];
-                inputIndex++;
-            }
-            else
-            {
-                emptyIndices[emptyIndiceCount] = i;
-                emptyIndiceCount++;
-            }
+           int UVGroupIndex = i * 4;
+           Vector3 point1 = GetPoint(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1]);
+           Vector3 point2 = GetPoint(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]);
+           float distance = Vector3.Distance(point1, point2);
+           if (distance > resolution)
+           {
+             subDivide = true;
+             break;
+           }
         }
-        for (int i = 0; i < emptyIndices.Length; i++)
+        if (subDivide)
         {
-            float enforcerUcoord = enforcer[emptyIndices[i]].UCoord;
-            // input should have all same v coords, same as enforcer
-            result[emptyIndices[i]] = new BezierSurfacePointData(GetPoint(enforcerUcoord, input[0].VCoord), enforcerUcoord, input[0].VCoord, GetNormal(enforcerUcoord, input[0].VCoord));
-        }
-        return result;
-    }
+            float[] nextUVGroupLeft = new float[UVGroups.Length];
+            float[] nextUVGroupRight = new float[UVGroups.Length];
+            for (int i = 0; i < segmentLength; i++)
+            {
+                int UVGroupIndex = i * 4;
+                float splitPointUT = Mathf.Lerp(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 2], 0.5f);
+                float splitPointVT = Mathf.Lerp(UVGroups[UVGroupIndex + 1], UVGroups[UVGroupIndex + 3], 0.5f);
+                nextUVGroupLeft[UVGroupIndex + 0] = UVGroups[UVGroupIndex + 0];
+                nextUVGroupLeft[UVGroupIndex + 1] = UVGroups[UVGroupIndex + 1];
+                nextUVGroupLeft[UVGroupIndex + 2] = splitPointUT;
+                nextUVGroupLeft[UVGroupIndex + 3] = splitPointVT;
 
-    // issue if same length but different resolution tree
-    private BezierSurfacePointData[] EnforceHighestResolutionAlongV(BezierSurfacePointData[] input, BezierSurfacePointData[] enforcer)
-    {
-        if (input[0].VCoord != enforcer[0].VCoord) throw new ArgumentOutOfRangeException("Input and Enforcer bezier loop must refer to same base V coords");
-        if (input.Length > enforcer.Length) throw new ArgumentOutOfRangeException("Enforcer Must have higher resolution");
-        BezierSurfacePointData[] result = new BezierSurfacePointData[enforcer.Length];
-        int[] emptyIndices = new int[enforcer.Length - input.Length];
-        int inputIndex = 0;
-        int emptyIndiceCount = 0;
-        for (int i = 0; i < enforcer.Length; i++)
-        {
-            if (enforcer[i].VCoord == input[inputIndex].VCoord)
-            {
-                result[i] = input[inputIndex];
-                inputIndex++;
+                nextUVGroupRight[UVGroupIndex + 0] = splitPointUT;
+                nextUVGroupRight[UVGroupIndex + 1] = splitPointVT;
+                nextUVGroupRight[UVGroupIndex + 2] = UVGroups[UVGroupIndex + 2];
+                nextUVGroupRight[UVGroupIndex + 3] = UVGroups[UVGroupIndex + 3];
             }
-            else
+            BezierSurfacePointData[][] left = SplitSegmentsAndEnforceResolution(nextUVGroupLeft, resolution);
+            BezierSurfacePointData[][] right = SplitSegmentsAndEnforceResolution(nextUVGroupRight, resolution);
+            BezierSurfacePointData[][] result = new BezierSurfacePointData[segmentLength][];
+            for (int i = 0; i < segmentLength; i++)
             {
-                emptyIndices[emptyIndiceCount] = i;
-                emptyIndiceCount++;
+                result[i] = new BezierSurfacePointData[(left[i].Length + right[i].Length) - 1];
             }
+
+            for (int i = 0; i < segmentLength; i++)
+            {
+                for (int j = 0; j < left[i].Length; j++)
+                {
+                    result[i][j] = left[i][j];
+                }
+
+                for (int j = 1; j < right[i].Length; j++)
+                {
+                    result[i][left[i].Length + (j - 1)] = right[i][j];
+                }
+            }
+            return result;
         }
-        for (int i = 0; i < emptyIndices.Length; i++)
+        else
         {
-            float enforcerVcoord = enforcer[emptyIndices[i]].VCoord;
-            // input should have all same v coords, same as enforcer
-            result[emptyIndices[i]] = new BezierSurfacePointData(GetPoint(input[0].UCoord, enforcerVcoord), input[0].UCoord, enforcerVcoord, GetNormal(input[0].UCoord, enforcerVcoord));
+            BezierSurfacePointData[][] result = new BezierSurfacePointData[segmentLength][];
+            for (int i = 0; i < segmentLength; i++)
+            {
+                int UVGroupIndex = i * 4;
+                Vector3 point1 = GetPoint(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1]);
+                Vector3 point2 = GetPoint(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]);
+                result[i] = new BezierSurfacePointData[] 
+                {
+                    new BezierSurfacePointData(point1, UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1], GetNormal(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1])),
+                    new BezierSurfacePointData(point2, UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3], GetNormal(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]))
+                };
+            }
+            return result;
         }
-        return result;
     }
 
     public static float BinomialCoefficient(float n, float k)
@@ -287,7 +296,6 @@ public class BezierSurface
     {
         return BinomialCoefficient(n, k) * Mathf.Pow((1 - t), (n - k)) * Mathf.Pow(t, k) * v;
     }
-
     public static Vector3 BezierFormula(Vector3[] controlPoints, float t)
     {
         float n = controlPoints.Length - 1;
@@ -300,24 +308,8 @@ public class BezierSurface
         }
         return result;
     }
+
 }
-
-// for actual bezier implementation, implement later for perf, if applicable
-//vec2 getBezierPoint( vec2* points, int numPoints, float t ) {
-//    vec2* tmp = new vec2[numPoints];
-//    memcpy(tmp, points, numPoints * sizeof(vec2));
-//    int i = numPoints - 1;
-//    while (i > 0) {
-//        for (int k = 0; k < i; k++)
-//            tmp[k] = tmp[k] + t * ( tmp[k+1] - tmp[k] );
-//        i--;
-//    }
-//    vec2 answer = tmp[0];
-//    delete[] tmp;
-//    return answer;
-//}
-
-// surface point struct
 
 public struct BezierSurfacePointData
 {
