@@ -5,15 +5,15 @@ using UnityEngine;
 public class BezierSurfaceTesting : MonoBehaviour
 {
 
-    public Vector3 point1;
-    public Vector3 point2;
-    public Vector3 point3;
-    public Vector3 point4;
-    public Vector3 point5;
-    public Vector3 point6;
-    public Vector3 point7;
-    public Vector3 point8;
-    public Vector3 point9;
+    public GameObject point1;
+    public GameObject point2;
+    public GameObject point3;
+    public GameObject point4;
+    public GameObject point5;
+    public GameObject point6;
+    public GameObject point7;
+    public GameObject point8;
+    public GameObject point9;
 
     MeshFilter filter;
     BezierSurface surface;
@@ -22,27 +22,26 @@ public class BezierSurfaceTesting : MonoBehaviour
     void Start()
     {
         filter = GetComponent<MeshFilter>();
-        Vector3[,] points = new Vector3[3, 3];
-        points[0, 0] = point1;
-        points[1, 0] = point2;
-        points[2, 0] = point3;
-        points[0, 1] = point4;
-        points[1, 1] = point5;
-        points[2, 1] = point6;
-        points[0, 2] = point7;
-        points[1, 2] = point8;
-        points[2, 2] = point9;
-        surface = new BezierSurface(points);
-        surf = new Surface(surface, 0.5f);
-        Mesh result = surf.BuildMesh();
-        filter.mesh = result;
     }
 
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            surface.ShiftOnSurfaceControlPoint(1, 1, Vector3.up);
+            Vector3[,] points = new Vector3[3, 3];
+            points[0, 0] = point1.transform.position;
+            points[1, 0] = point2.transform.position;
+            points[2, 0] = point3.transform.position;
+            points[0, 1] = point4.transform.position;
+            points[1, 1] = point5.transform.position;
+            points[2, 1] = point6.transform.position;
+            points[0, 2] = point7.transform.position;
+            points[1, 2] = point8.transform.position;
+            points[2, 2] = point9.transform.position;
+            surface = new BezierSurface(points);
+            surf = new Surface(surface, 0.5f);
+            Mesh result = surf.BuildMesh();
+            filter.mesh = result;
         }
     }
 

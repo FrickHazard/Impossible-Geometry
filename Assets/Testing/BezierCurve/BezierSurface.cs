@@ -282,6 +282,7 @@ public class BezierSurface
         }
     }
 
+    // todo to see if more efficent
     public static float BinomialCoefficient(float n, float k)
     {
         float sum = 0;
