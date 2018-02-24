@@ -29,15 +29,15 @@ public class BezierSurfaceTesting : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Vector3[,] points = new Vector3[3, 3];
-            points[0, 0] = point1.transform.position;
-            points[1, 0] = point2.transform.position;
-            points[2, 0] = point3.transform.position;
-            points[0, 1] = point4.transform.position;
-            points[1, 1] = point5.transform.position;
-            points[2, 1] = point6.transform.position;
-            points[0, 2] = point7.transform.position;
-            points[1, 2] = point8.transform.position;
-            points[2, 2] = point9.transform.position;
+            points[0, 0] = point1.transform.localPosition;
+            points[1, 0] = point2.transform.localPosition;
+            points[2, 0] = point3.transform.localPosition;
+            points[0, 1] = point4.transform.localPosition;
+            points[1, 1] = point5.transform.localPosition;
+            points[2, 1] = point6.transform.localPosition;
+            points[0, 2] = point7.transform.localPosition;
+            points[1, 2] = point8.transform.localPosition;
+            points[2, 2] = point9.transform.localPosition;
             surface = new BezierSurface(points);
             surf = new Surface(surface, 0.5f);
             Mesh result = surf.BuildMesh();
