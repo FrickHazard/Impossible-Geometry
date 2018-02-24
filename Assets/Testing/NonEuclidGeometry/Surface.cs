@@ -31,6 +31,7 @@ public class Surface {
         }
         Vector3[] verts = new Vector3[totalVertLength];
         Vector3[] norms = new Vector3[totalVertLength];
+        Vector2[] uvs = new Vector2[totalVertLength];
         int[] triangles = new int[totalTriangleLength];
         int vertIndex = 0;
         int triangleIndex = 0;
@@ -57,6 +58,7 @@ public class Surface {
                    }
                   verts[vertIndex] = patchPointGroups[i][j, k].Point ;
                   norms[vertIndex] = patchPointGroups[i][j, k].Normal;
+                  uvs[vertIndex] = new Vector2(patchPointGroups[i][j, k].UCoord, patchPointGroups[i][j, k].VCoord);
                   vertIndex++;
                 }
             }
@@ -65,6 +67,7 @@ public class Surface {
         mesh.vertices = verts;
         mesh.triangles = triangles;
         mesh.normals = norms;
+        mesh.uv = uvs;
         mesh.RecalculateBounds();
         return mesh;
     }
