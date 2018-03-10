@@ -14,35 +14,54 @@ public class BezierSurfaceTesting : MonoBehaviour
     public GameObject point7;
     public GameObject point8;
     public GameObject point9;
-
-    MeshFilter filter;
+    MeshFilter meshFilter1;
+    MeshFilter meshFilter2;
+    MeshFilter meshFilter3;
+    MeshFilter meshFilter4;
     BezierSurface surface;
+    Material mat;
     Surface surf;
     // Use this for initialization
     void Start()
     {
-        filter = GetComponent<MeshFilter>();
+        mat = GetComponent<MeshRenderer>().material;
+        var gameObject1 = new GameObject();
+        gameObject1.transform.parent = this.transform;
+        gameObject1.AddComponent<MeshRenderer>().material = mat;
+        meshFilter1 = gameObject1.AddComponent<MeshFilter>();
+        var gameObject2 = new GameObject();
+        gameObject2.transform.parent = this.transform;
+        gameObject2.AddComponent<MeshRenderer>().material = mat;
+        meshFilter2 = gameObject2.AddComponent<MeshFilter>();
+        var gameObject3 = new GameObject();
+        gameObject3.transform.parent = this.transform;
+        gameObject3.AddComponent<MeshRenderer>().material = mat;
+        meshFilter3 = gameObject3.AddComponent<MeshFilter>();
+        var gameObject4 = new GameObject();
+        gameObject4.transform.parent = this.transform;
+        gameObject4.AddComponent<MeshRenderer>().material = mat;
+        meshFilter4 = gameObject4.AddComponent<MeshFilter>();
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Vector3[,] points = new Vector3[3, 3];
-            points[0, 0] = point1.transform.localPosition;
-            points[1, 0] = point2.transform.localPosition;
-            points[2, 0] = point3.transform.localPosition;
-            points[0, 1] = point4.transform.localPosition;
-            points[1, 1] = point5.transform.localPosition;
-            points[2, 1] = point6.transform.localPosition;
-            points[0, 2] = point7.transform.localPosition;
-            points[1, 2] = point8.transform.localPosition;
-            points[2, 2] = point9.transform.localPosition;
-            surface = new BezierSurface(points);
-            surf = new Surface(surface, 0.5f);
-            Mesh result = surf.BuildMesh();
-            filter.mesh = result;
-        }
+        Vector3[,] points = new Vector3[3, 3];
+        points[0, 0] = point1.transform.localPosition;
+        points[1, 0] = point2.transform.localPosition;
+        points[2, 0] = point3.transform.localPosition;
+        points[0, 1] = point4.transform.localPosition;
+        points[1, 1] = point5.transform.localPosition;
+        points[2, 1] = point6.transform.localPosition;
+        points[0, 2] = point7.transform.localPosition;
+        points[1, 2] = point8.transform.localPosition;
+        points[2, 2] = point9.transform.localPosition;
+        surface = new BezierSurface(points);
+        surf = new Surface(surface, 0.5f);
+        List<Mesh> results = surf.BuildMesh();
+        meshFilter1.mesh = results[0];
+        meshFilter2.mesh = results[1];
+        meshFilter3.mesh = results[2];
+        meshFilter4.mesh = results[3];
     }
 
     private void OnDrawGizmos()
