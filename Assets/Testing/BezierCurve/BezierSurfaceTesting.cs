@@ -61,13 +61,13 @@ public class BezierSurfaceTesting : MonoBehaviour
         points[1, 2] = point8.transform.localPosition;
         points[2, 2] = point9.transform.localPosition;
         surface = new BezierSurface(points);
-        surf = new Surface(surface, 0.5f);
+        surf = new Surface(surface, 0.3f);
         List<Mesh> results = surf.BuildMesh();
         meshFilter1.mesh = results[0];
         meshFilter2.mesh = results[1];
         meshFilter3.mesh = results[2];
         meshFilter4.mesh = results[3];
-		meshFilter5.mesh = surf.SealSeamTest();
+	    meshFilter5.mesh = results[4];
 	}
 
     private void OnDrawGizmos()
