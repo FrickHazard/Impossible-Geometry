@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Surface
@@ -60,7 +61,6 @@ public class Surface
                         vertIndex++;
                     }
                 }
-                BezierSurfacePointData[][] edges = bezierSurface.GetControlPointSurfacePatchSeam(i, j, ResolutionPerWorldUnit);
                 int meshIndex = (i * patchPointGroups.GetLength(1)) + j;
                 meshes[meshIndex].vertices = verts;
                 meshes[meshIndex].triangles = triangles;
@@ -72,14 +72,119 @@ public class Surface
         return meshes;
     }
 
-    public static void SealSeam(BezierSurfacePointData[,] original, BezierSurfacePointData[][] edges)
+    public  Mesh SealSeamTest()
     {
-        var seam = edges[0];
-        var originalEdge = GetRow(original, 0);
-        for (int i = 0; i < length; i++)
-        {
+	    BezierSurfacePointData[,] original = bezierSurface.GetControlPointSurfacePatches(ResolutionPerWorldUnit)[0,0];
+		BezierSurfacePointData[][] edges = bezierSurface.GetControlPointSurfacePatchSeam(0, 0, ResolutionPerWorldUnit);
+		var seam = edges[0];
+        var originalEdge = GetCol(original, 1);
 
+        int triangleCount = (originalEdge.Length + edges[0].Length) - 4;
+		int[] triangles = new int[triangleCount * 3];
+
+        // remove tails
+        BezierSurfacePointData[] clippedEdge = new BezierSurfacePointData[originalEdge.Length - 2];
+
+	    bool[] clippedEdgeUsedFlags = new bool[clippedEdge.Length];
+	    for (int i = 0; i < clippedEdgeUsedFlags.Length; i++) { clippedEdgeUsedFlags[i] = false; }
+
+	    int[] clippedEdgeFirstConnectionIndices = new int[clippedEdge.Length];
+	    for (int i = 0; i < clippedEdgeFirstConnectionIndices.Length; i++) { clippedEdgeFirstConnectionIndices[i] = -1; }
+
+		for (int i = 1; i < originalEdge.Length -1; i++)
+        {
+            clippedEdge[i - 1] = originalEdge[i];
         }
+        
+        // dont use previus used points when moving over
+        for (int i = 0; i < seam.Length - 1; i++)
+        {
+            var point1 = seam[i];
+            var point2 = seam[i + 1];
+            // find closest to point 2 that is at least as great as point 2
+            var point3Index = ClosestUV(clippedEdge, clippedEdgeUsedFlags, point2);
+	        triangles[(i * 3) + 0] = i;
+	        triangles[(i * 3) + 1] = i + 1;
+	        triangles[(i * 3) + 2] = seam.Length + point3Index;
+			if (clippedEdgeFirstConnectionIndices[point3Index] == -1)
+	        {
+		        clippedEdgeFirstConnectionIndices[point3Index] = i; //point 1 index
+	        }
+        }
+
+		for (int i = clippedEdge.Length - 1; i > 0; i--)
+		{
+			var point1 = clippedEdge[i];
+			var point2 = clippedEdge[i - 1];
+			// find closest to point 2 that is at least as great as point 2
+			triangles[((seam.Length - 1) * 3) + (((clippedEdge.Length - 1) - i) * 3) + 0] = seam.Length + i;
+			triangles[((seam.Length - 1) * 3) + (((clippedEdge.Length - 1) - i) * 3) + 1] = seam.Length + (i - 1);
+			if (clippedEdgeFirstConnectionIndices[i] != -1)
+			{
+				triangles[((seam.Length - 1) * 3) + (((clippedEdge.Length - 1) - i) * 3) + 2] = clippedEdgeFirstConnectionIndices[i];
+			}
+			else
+			{
+				// go back until a valid math is found
+				int lastIndex = -1;
+				for (int j = 0; j < ((clippedEdge.Length - 1) - i); j++)
+				{
+					if (clippedEdgeFirstConnectionIndices[i + j] != -1)
+					{
+						lastIndex = clippedEdgeFirstConnectionIndices[i + j];
+						break;
+					}
+				}
+
+				triangles[((seam.Length - 1) * 3) + (((clippedEdge.Length - 1) - i) * 3) + 2] = lastIndex;
+			}
+		}
+
+		Mesh result = new Mesh();
+	    result.vertices = seam.Concat(clippedEdge).Select(x => x.Point).ToArray();
+	    result.normals = seam.Concat(clippedEdge).Select(x => x.Normal).ToArray();
+	    result.triangles = triangles;
+		result.uv = seam.Concat(clippedEdge).Select(x => x.UVCoord).ToArray();
+		return result;
+    }
+
+    private static int ClosestUV(BezierSurfacePointData[] seam, bool[] usedFlags, BezierSurfacePointData target)
+    {
+		// get first point to test
+	    int closestIndex = -1;
+	    bool allUsed = true;
+	    bool foundFirst = false;
+	    for (int i = 0; i < usedFlags.Length; i++)
+	    {
+		    if (!usedFlags[i])
+		    {
+			    if (!foundFirst)
+			    {
+				    closestIndex = i;
+				    foundFirst = true;
+			    }
+				if(allUsed) allUsed = false;
+			} 
+	    }
+
+		// if all points have been used use last point
+	    if (allUsed)
+	    {
+		    closestIndex = seam.Length -1;
+		}
+
+		for (int i = 0; i < seam.Length; i++)
+        {
+			if(usedFlags[i]) continue;
+
+            var difference = Math.Abs(seam[i].UVCoord.x - target.UVCoord.x);
+            if (difference < Math.Abs(seam[closestIndex].UVCoord.x - target.UVCoord.x))
+            {
+                closestIndex = i;
+            }
+        }
+	    usedFlags[closestIndex] = true;
+        return closestIndex;
     }
 
     public static T[] GetRow<T>(T[,] matrix, int row)

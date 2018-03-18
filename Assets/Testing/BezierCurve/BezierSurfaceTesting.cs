@@ -18,6 +18,7 @@ public class BezierSurfaceTesting : MonoBehaviour
     MeshFilter meshFilter2;
     MeshFilter meshFilter3;
     MeshFilter meshFilter4;
+	private MeshFilter meshFilter5;
     BezierSurface surface;
     Material mat;
     Surface surf;
@@ -41,7 +42,11 @@ public class BezierSurfaceTesting : MonoBehaviour
         gameObject4.transform.parent = this.transform;
         gameObject4.AddComponent<MeshRenderer>().material = mat;
         meshFilter4 = gameObject4.AddComponent<MeshFilter>();
-    }
+	    var gameObject5 = new GameObject();
+	    gameObject5.transform.parent = this.transform;
+	    gameObject5.AddComponent<MeshRenderer>().material = mat;
+	    meshFilter5 = gameObject5.AddComponent<MeshFilter>();
+	}
 
     void Update()
     {
@@ -62,7 +67,8 @@ public class BezierSurfaceTesting : MonoBehaviour
         meshFilter2.mesh = results[1];
         meshFilter3.mesh = results[2];
         meshFilter4.mesh = results[3];
-    }
+		meshFilter5.mesh = surf.SealSeamTest();
+	}
 
     private void OnDrawGizmos()
     {

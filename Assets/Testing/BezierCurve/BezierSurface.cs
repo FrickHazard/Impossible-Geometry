@@ -319,7 +319,7 @@ public class BezierSurface
         BezierSurfacePointData[] bottomEdge = SubDivideControlPointSegment(indexU1, indexV1, indexU1 + 1, indexV1, resolution);
         BezierSurfacePointData[] topEdge = SubDivideControlPointSegment(indexU1, indexV1 + 1, indexU1 + 1, indexV1 + 1, resolution);
         BezierSurfacePointData[] leftEdge = SubDivideControlPointSegment(indexU1, indexV1, indexU1, indexV1 + 1, resolution);
-        BezierSurfacePointData[] rightEdge = SubDivideControlPointSegment(indexU1, indexV1 + 1, indexU1 + 1, indexV1 + 1, resolution);
+        BezierSurfacePointData[] rightEdge = SubDivideControlPointSegment(indexU1 + 1, indexV1, indexU1 + 1, indexV1 + 1, resolution);
         result[0] = bottomEdge;
         result[1] = topEdge;
         result[2] = leftEdge;
