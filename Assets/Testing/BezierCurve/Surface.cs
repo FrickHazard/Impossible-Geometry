@@ -305,6 +305,10 @@ public class Surface
 
 		}
 	    usedFlags[closestIndex] = true;
+	    for (int i = 0; i < closestIndex; i++)
+	    {
+		    if (!usedFlags[i]) usedFlags[i] = true;
+	    }
         return closestIndex;
     }
 
