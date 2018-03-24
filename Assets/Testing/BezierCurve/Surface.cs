@@ -10,14 +10,29 @@ public class Surface
 
     public BezierSurface bezierSurface;
     public List<Mesh> meshes;
-    public float ResolutionPerWorldUnit;
+    public float resolutionPerWorldUnit;
+    public int totalPatchesCount
+    {
+        get
+        {
+            return _totalPatchesCount;
+        }
+    }
+    private readonly int _totalPatchesCount = 0;
+    public int totalMeshPiecesCount
+    {
+        get
+        {
+            return totalPatchesCount * 5;
+        }
+    }
 
-    public Surface(BezierSurface bezierSurface, float resolutionPerWorldUnit)
+    public Surface(BezierSurface bezierSurface, float resolution)
     {
         this.bezierSurface = bezierSurface;
-        int controlPointSquares = (bezierSurface.ULength - 1) * (bezierSurface.VLength - 1);
-        meshes = new List<Mesh>(controlPointSquares);
-        for (int i = 0; i < controlPointSquares; i++)
+        _totalPatchesCount = (bezierSurface.ULength - 1) * (bezierSurface.VLength - 1);
+        meshes = new List<Mesh>(_totalPatchesCount);
+        for (int i = 0; i < _totalPatchesCount; i++)
         {
             meshes.Add(new Mesh());
 	        meshes.Add(new Mesh());
@@ -30,13 +45,13 @@ public class Surface
 	        meshes[(i * 5) + 3].MarkDynamic();
 	        meshes[(i * 5) + 4].MarkDynamic();
 		}
-        ResolutionPerWorldUnit = resolutionPerWorldUnit;
+        resolutionPerWorldUnit = resolution;
     }
 
 	//un met assumption grid must at least by 3 by 3
     public List<Mesh> BuildMesh()
     {
-        BezierSurfacePointData[,][,] patchPointGroups = bezierSurface.GetControlPointSurfacePatches(ResolutionPerWorldUnit);
+        BezierSurfacePointData[,][,] patchPointGroups = bezierSurface.GetControlPointSurfacePatches(resolutionPerWorldUnit);
         for (int i = 0; i < patchPointGroups.GetLength(0); i++)
         {
             for (int j = 0; j < patchPointGroups.GetLength(1); j++)
@@ -87,7 +102,7 @@ public class Surface
 
     public void SealSeams(BezierSurfacePointData[,] controlGroup, int gridIIndex, int gridJIndex, int meshIndex)
     {
-		BezierSurfacePointData[][] edges = bezierSurface.GetControlPointSurfacePatchSeam(gridIIndex, gridJIndex, ResolutionPerWorldUnit);
+		BezierSurfacePointData[][] edges = bezierSurface.GetControlPointSurfacePatchSeam(gridIIndex, gridJIndex, resolutionPerWorldUnit);
 		var bottomSeamVertLoop = edges[0];
 	    var topSeamVertLoop = edges[1];
 	    var leftSeamVertLoop = edges[2];
@@ -170,11 +185,10 @@ public class Surface
 		    clippedEdgeUsedFlags[0] = true;
 			clippedEdgeFirstConnectionIndices[0] = 0;
 
-
 			// dont use previus used points when moving over
 			for (int j = 1; j < vertLoop.Length - 1; j++)
 			{
-				var point1 = vertLoop[j];
+				//var point1 = vertLoop[j];
 				var point2 = vertLoop[j + 1];
 				// find closest to point 2 that is at least as great as point 2
 				var point3Index = ClosestUV(clippedEdge, point2, clippedEdgeUsedFlags, useV);
@@ -200,8 +214,6 @@ public class Surface
 
 			for (int j = clippedEdge.Length - 1; j > 0; j--)
 			{
-				var point1 = clippedEdge[j];
-				var point2 = clippedEdge[j - 1];
 				// find closest to point 2 that is at least as great as point 2
 				if (flipNormals)
 				{
