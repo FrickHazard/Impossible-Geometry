@@ -35,7 +35,7 @@ public class BezierSurface
         {
             loopPointsU[i] = DeCasteljauLoop(grid[i], UT, false);
         }
-        
+
         Vector3[] loopPointsV = new Vector3[vGrid.Length];
         for (int i = 0; i < vGrid.Length; i++)
         {
@@ -63,7 +63,7 @@ public class BezierSurface
                     percent -= percentPerSegment;
                     indexPassCount++;
                 }
-                result[i] = Vector3.Lerp(loop[indexPassCount], loop[indexPassCount + 1], percent * (loop.Length -1));
+                result[i] = Vector3.Lerp(loop[indexPassCount], loop[indexPassCount + 1], percent * (loop.Length - 1));
             }
         }
         return result;
@@ -180,7 +180,11 @@ public class BezierSurface
                 BezierSurfacePointData[][][] row = new BezierSurfacePointData[nextRowLength - 1][][];
                 for (int j = 0; j < nextRowLength - 1; j++)
                 {
-                    row[j] = SubDivideTriangle(GetUIndexToT(i + 1), GetVIndexToT(i + 1, j), GetUIndexToT(i + 1), GetVIndexToT(i + 1, j + 1), GetUIndexToT(i), 1f, resolution);
+                    row[j] = SubDivideTriangle(
+                        GetUIndexToT(i + 1), GetVIndexToT(i + 1, j),
+                        GetUIndexToT(i + 1), GetVIndexToT(i + 1, j + 1),
+                        GetUIndexToT(i), 1f,
+                   resolution);
                 }
                 result[i] = row;
             }
@@ -193,9 +197,13 @@ public class BezierSurface
                     continue;
                 }
                 BezierSurfacePointData[][][] row = new BezierSurfacePointData[rowLength - 1][][];
-                for (int j = 0; j < rowLength - 2; j++)
+                for (int j = 0; j < rowLength - 1; j++)
                 {
-                    row[j] = SubDivideTriangle(GetUIndexToT(i), GetVIndexToT(i, j), GetUIndexToT(i), GetVIndexToT(i, j + 1), GetUIndexToT(i + 1), 1f, resolution);
+                    row[j] = SubDivideTriangle(
+                        GetUIndexToT(i), GetVIndexToT(i, j),
+                        GetUIndexToT(i), GetVIndexToT(i, j + 1),
+                        GetUIndexToT(i + 1), 1f,
+                   resolution);
                 }
                 result[i] = row;
             }
