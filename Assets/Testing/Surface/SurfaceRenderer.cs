@@ -45,6 +45,9 @@ public class SurfaceRenderer : MonoBehaviour
         {
             var meshPiece = new GameObject();
             meshPiece.name = "Mesh Piece " + i;
+            meshPiece.transform.position = this.transform.position;
+            meshPiece.transform.rotation = this.transform.rotation;
+            meshPiece.transform.localScale = this.transform.localScale;
             meshPiece.transform.parent = this.transform;
             meshPieceGameObjects[i] = meshPiece;
             meshPieceFilters[i] = meshPiece.AddComponent<MeshFilter>();

@@ -4,17 +4,6 @@ using UnityEngine;
 
 public class CurveTest : MonoBehaviour {
 
-    public void Start()
-    {
-        BezierCurve curve = new BezierCurve(new List<Vector3>(){
-            transform.position,
-            transform.position + (transform.right/2) + transform.up,
-            transform.position +  transform.right,
-        });
-        curve.DebugDraw(Color.red, 5f);
-    }
-
-
     public void StretchOutBy(Vector3 center, float radius)
     {
         Vector3 direction = (transform.position - center).normalized;
