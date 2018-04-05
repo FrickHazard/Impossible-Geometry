@@ -10,11 +10,17 @@ public class BezierSurface
     private Vector3[][] grid;
     private Vector3[][] vGrid;
     public Vector3[][] Grid { get { return grid; } }
+    public int PatchCount
+    {
+        get { return patchCount;  }
+    }
+    public int patchCount = -1;
 
     public BezierSurface(Vector3[][] grid)
     {
         this.grid = grid;
         SetUpVGrid();
+        SetUpPatchCount();
     }
 
     //uses DeCasteljau Algorithm currently, so technically not bezier
@@ -109,6 +115,30 @@ public class BezierSurface
         vGrid = rows;
     }
 
+    public void SetUpPatchCount()
+    {
+        int count = 0;
+        for (int i = 0; i < grid.Length - 1; i++)
+        {
+            int rowLength = grid[i].Length;
+            int nextRowLength = grid[i + 1].Length;
+            if (rowLength != 1 && nextRowLength != 1)
+            {
+                count += rowLength - 1;
+            }
+            else if (rowLength == 1)
+            {
+                count += nextRowLength - 1;
+            }
+            else if (nextRowLength == 1)
+            {
+                count += rowLength - 1;
+            }
+        }
+
+        patchCount = count;
+    }
+
     public Vector3 GetOnSurfaceControlPoint(int indexU, int indexV)
     {
         VerifyGridIndicesInRange(indexU, indexV);
@@ -127,6 +157,7 @@ public class BezierSurface
     {
         if (points.Length == 1 && !tangent) return points[0];
         if (points.Length == 1 && tangent) throw new ArgumentException("Get not calculate tangent for loop of size 1!");
+        if (points.Length == 2 && tangent) return Vector3.Normalize(points[1] - points[0]);
         // number of subdivisions decrease by one each loop
         Vector3[] loop = new Vector3[points.Length - 1];
         for (int i = 0; i < points.Length - 1; i++)
@@ -157,7 +188,9 @@ public class BezierSurface
 
     private float GetVIndexToT(int indexU, int indexV)
     {
+        if (float.IsInfinity((float)indexV / (float)(grid[indexU].Length - 1))) throw new ArgumentException("is infinity");
         return (float)indexV / (float)(grid[indexU].Length - 1);
+       
     }
 
     public BezierSurfacePointData[][][][] SubDivideSurface(float resolution)
@@ -181,9 +214,9 @@ public class BezierSurface
                 for (int j = 0; j < nextRowLength - 1; j++)
                 {
                     row[j] = SubDivideTriangle(
-                        GetUIndexToT(i + 1), GetVIndexToT(i + 1, j),
-                        GetUIndexToT(i + 1), GetVIndexToT(i + 1, j + 1),
-                        GetUIndexToT(i), 1f,
+                        (float)(j + 1) / (float)(nextRowLength - 1), (float)(i + 1) / (float)(grid.Length - 1),
+                        (float)j / (float)(nextRowLength - 1) , (float)(i + 1) / (float)(grid.Length - 1),
+                        0.5f, (float)(i) / (float)(grid.Length - 1),
                    resolution);
                 }
                 result[i] = row;
@@ -200,9 +233,9 @@ public class BezierSurface
                 for (int j = 0; j < rowLength - 1; j++)
                 {
                     row[j] = SubDivideTriangle(
-                        GetUIndexToT(i), GetVIndexToT(i, j),
-                        GetUIndexToT(i), GetVIndexToT(i, j + 1),
-                        GetUIndexToT(i + 1), 1f,
+                        (float)(j) / (float)(rowLength - 1), (float)(i) / (float)(grid.Length - 1),
+                        (float)(j + 1) / (float)(rowLength - 1), (float)(i) / (float)(grid.Length - 1),
+                        0.5f, (float)(i + 1) / (float)(grid.Length - 1),
                    resolution);
                 }
                 result[i] = row;
@@ -213,7 +246,12 @@ public class BezierSurface
                 BezierSurfacePointData[][][] row = new BezierSurfacePointData[rowLength - 1][][];
                 for (int j = 0; j < rowLength - 1; j++)
                 {
-                    row[j] = SubDivideSquare(GetUIndexToT(i), GetVIndexToT(i, j), GetUIndexToT(i), GetVIndexToT(i, j + 1), GetUIndexToT(i + 1), GetVIndexToT(i + 1, j), GetUIndexToT(i + 1), GetVIndexToT(i + 1, j + 1), resolution);
+                    row[j] = SubDivideSquare(
+                        (float)(j) / (float)(rowLength - 1), (float)(i + 1) / (float)(grid.Length - 1),
+                        (float)(j + 1) / (float)(rowLength - 1), (float)(i + 1) / (float)(grid.Length - 1),
+                        (float)(j) / (float)(rowLength - 1), (float)(i) / (float)(grid.Length - 1),
+                        (float)(j + 1) / (float)(rowLength - 1), (float)(i) / (float)(grid.Length - 1),
+                  resolution);
                 }
                 result[i] = row;
             }
@@ -288,12 +326,7 @@ public class BezierSurface
         return result;
     }
 
-    private BezierSurfacePointData[] SubDivideControlPointSegment(int indexU1, int indexV1, int indexU2, int indexV2, float resolution)
-    {
-        return SplitSegment(GetUIndexToT(indexU1), GetVIndexToT(indexU1, indexV1), GetUIndexToT(indexU2), GetVIndexToT(indexU2, indexV2), resolution);
-    }
-
-    private BezierSurfacePointData[] SplitSegment(float UT1, float VT1, float UT2, float VT2, float resolution)
+    public BezierSurfacePointData[] SplitSegment(float UT1, float VT1, float UT2, float VT2, float resolution)
     {
         Vector3 point1 = GetPoint(UT1, VT1);
         Vector3 point2 = GetPoint(UT2, VT2);
@@ -429,22 +462,6 @@ public class BezierSurface
         }
         return result;
     }
-
-    // todo will be moved to surface utility is used for teselating edge
-    public BezierSurfacePointData[][] GetControlPointSurfacePatchSeam(int indexU1, int indexV1, float resolution)
-    {
-        BezierSurfacePointData[][] result = new BezierSurfacePointData[4][];
-        BezierSurfacePointData[] bottomEdge = SubDivideControlPointSegment(indexU1, indexV1, indexU1 + 1, indexV1, resolution);
-        BezierSurfacePointData[] topEdge = SubDivideControlPointSegment(indexU1, indexV1 + 1, indexU1 + 1, indexV1 + 1, resolution);
-        BezierSurfacePointData[] leftEdge = SubDivideControlPointSegment(indexU1, indexV1, indexU1, indexV1 + 1, resolution);
-        BezierSurfacePointData[] rightEdge = SubDivideControlPointSegment(indexU1 + 1, indexV1, indexU1 + 1, indexV1 + 1, resolution);
-        result[0] = bottomEdge;
-        result[1] = topEdge;
-        result[2] = leftEdge;
-        result[3] = rightEdge;
-        return result;
-    }
-
 }
 
 public struct BezierSurfacePointData
