@@ -57,30 +57,32 @@ public class Surface
         {
             for (int j = 0; j < patchPointGroups[i].Length; j++)
             {
-                Vector3[] verts = new Vector3[(patchPointGroups[i][j].Length * patchPointGroups[i][j][0].Length)];
-                Vector3[] norms = new Vector3[verts.Length];
-                Vector2[] uvs = new Vector2[verts.Length];
-                int[] triangles = new int[(patchPointGroups[i][j].Length - 1) * (patchPointGroups[i][j][0].Length - 1) * 6];
+                int vertCount = ((patchPointGroups[i][j].Length - 2) * (patchPointGroups[i][j][0].Length - 2));
+                Vector3[] verts = new Vector3[vertCount];
+                Vector3[] norms = new Vector3[vertCount];
+                Vector2[] uvs = new Vector2[vertCount];
+                int triangleCount = (patchPointGroups[i][j].Length - 3) * (patchPointGroups[i][j][0].Length - 3) * 6;
+                int[] triangles = new int[triangleCount];
                 int triangleIndex = 0;
-                for (int k = 0; k < patchPointGroups[i][j].Length; k++)
+                for (int k = 1; k < patchPointGroups[i][j].Length - 1; k++)
                 {
-                    for (int l = 0; l < patchPointGroups[i][j][k].Length; l++)
+                    for (int l = 1; l < patchPointGroups[i][j][k].Length - 1; l++)
                     {
                         //set triangles for vert
-                        if (l != patchPointGroups[i][j][k].Length - 1 && (k != patchPointGroups[i][j].Length - 1))
+                        if (l != patchPointGroups[i][j][k].Length - 2 && (k != patchPointGroups[i][j].Length - 2))
                         {
-                            int offsetPerL = patchPointGroups[i][j][k].Length;
-                            int offset = (k * offsetPerL);
-                            triangles[triangleIndex + 0] = offset + (l);
-                            triangles[triangleIndex + 1] = offset + (1 * offsetPerL) + (l);
-                            triangles[triangleIndex + 2] = offset + (1 * offsetPerL) + (l + 1);
+                            int offsetPerL = patchPointGroups[i][j][k].Length - 2;
+                            int offset = ((k - 1) * offsetPerL);
+                            triangles[triangleIndex + 0] = offset + (l - 1);
+                            triangles[triangleIndex + 1] = offset + (1 * offsetPerL) + (l - 1);
+                            triangles[triangleIndex + 2] = offset + (1 * offsetPerL) + (l);
 
-                            triangles[triangleIndex + 3] = offset + (1 * offsetPerL) + (l + 1);
-                            triangles[triangleIndex + 4] = offset + (l + 1);
-                            triangles[triangleIndex + 5] = offset + (l);
+                            triangles[triangleIndex + 3] = offset + (1 * offsetPerL) + (l);
+                            triangles[triangleIndex + 4] = offset + (l);
+                            triangles[triangleIndex + 5] = offset + (l - 1);
                             triangleIndex += 6;
                         }
-                        int vertIndex = (k * (patchPointGroups[i][j][k].Length)) + l;
+                        int vertIndex = ((k - 1) * (patchPointGroups[i][j][k].Length - 2)) + (l - 1);
                         verts[vertIndex] = patchPointGroups[i][j][k][l].Point;
                         norms[vertIndex] = patchPointGroups[i][j][k][l].Normal;
                         uvs[vertIndex] = patchPointGroups[i][j][k][l].UVCoord;
@@ -172,6 +174,13 @@ public class Surface
                         break;
                     }
             }
+
+            // for triangles
+            if (Vector2.Distance(vertLoop[0].UVCoord, vertLoop[vertLoop.Length - 1].UVCoord) < 0.000000001)
+            {
+                return;
+            }
+
             int triangleCount = (mergeVertLoop.Length + vertLoop.Length) - 4;
             int[] triangles = new int[triangleCount * 3];
 
