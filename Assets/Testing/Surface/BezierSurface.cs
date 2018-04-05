@@ -45,11 +45,11 @@ public class BezierSurface
         Vector3[] loopPointsV = new Vector3[vGrid.Length];
         for (int i = 0; i < vGrid.Length; i++)
         {
-            Vector3[] loop = MakeLoopSize(vGrid[i], vGrid.Length);
+            Vector3[] loop = vGrid[i];
             loopPointsV[i] = DeCasteljauLoop(loop, VT, false);
         }
         Vector3 vTangent = DeCasteljauLoop(loopPointsU, VT, true);
-        Vector3 uTangent = DeCasteljauLoop(loopPointsV, UT, true);
+        Vector3 uTangent = -DeCasteljauLoop(loopPointsV, UT, true);
         return Vector3.Cross(vTangent, uTangent);
     }
 
@@ -112,7 +112,7 @@ public class BezierSurface
             }
             rows[i] = loop;
         }
-        vGrid = rows;
+        vGrid = rows.Reverse().ToArray();
     }
 
     public void SetUpPatchCount()
@@ -157,7 +157,10 @@ public class BezierSurface
     {
         if (points.Length == 1 && !tangent) return points[0];
         if (points.Length == 1 && tangent) throw new ArgumentException("Get not calculate tangent for loop of size 1!");
-        if (points.Length == 2 && tangent) return Vector3.Normalize(points[1] - points[0]);
+        if (points.Length == 2 && tangent)
+        {
+            return Vector3.Normalize(points[1] - points[0]);
+        }
         // number of subdivisions decrease by one each loop
         Vector3[] loop = new Vector3[points.Length - 1];
         for (int i = 0; i < points.Length - 1; i++)
@@ -188,9 +191,7 @@ public class BezierSurface
 
     private float GetVIndexToT(int indexU, int indexV)
     {
-        if (float.IsInfinity((float)indexV / (float)(grid[indexU].Length - 1))) throw new ArgumentException("is infinity");
-        return (float)indexV / (float)(grid[indexU].Length - 1);
-       
+        return (float)indexV / (float)(grid[indexU].Length - 1);  
     }
 
     public BezierSurfacePointData[][][][] SubDivideSurface(float resolution)

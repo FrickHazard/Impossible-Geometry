@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class ImpossibleStructure {
 
-    #region public properties
+#region public properties
 
     public Vector3 Centroid
     {
@@ -167,13 +167,6 @@ public class ImpossibleStructure {
             result.Add(camera.ViewportToWorldPoint(projectedPoints[i] += vector));
         }
         return result;
-    }
-
-    private Vector2 ShrinkBackPoint(Vector2 point, Vector2 left, Vector2 right)
-    {
-        Vector2 leftMiddle = Vector2.Lerp(point, right, 0.3f);
-        Vector2 rightMiddle = Vector2.Lerp(point, left, 0.3f);
-        return Vector2.Lerp(rightMiddle, leftMiddle, 0.5f);
     }
 
 #endregion
