@@ -30,7 +30,6 @@ public class PolygonSurface : MonoBehaviour
 	        triangle.transform.rotation = this.transform.rotation;
 	        triangle.transform.localScale = this.transform.localScale;
 	        triangle.transform.parent = this.transform;
-            Debug.Log(bezierSurfaces[i].GetNormal(1f, 1f));
         }
 
     }
@@ -45,13 +44,13 @@ public class PolygonSurface : MonoBehaviour
             Vector3.Lerp(leftPoint, rightPoint, 0.66f),
             rightPoint
         };
-        pointData[1] = new Vector3[]
+        pointData[0] = new Vector3[]
         {
             Vector3.Lerp(leftPoint, center, 0.5f),
             //Vector3.Lerp(Vector3.Lerp(leftPoint, center, 0.5f), Vector3.Lerp(rightPoint, center, 0.5f), 0.5f),
             Vector3.Lerp(rightPoint, center, 0.5f)
         };
-        // pointData[2] = new Vector3[] { center };
+        pointData[1] = new Vector3[] { center };
         return new BezierSurface(pointData);
     }
 }

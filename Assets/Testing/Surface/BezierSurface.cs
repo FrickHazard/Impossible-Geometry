@@ -8,6 +8,7 @@ using UnityEngine;
 public class BezierSurface
 {
     private Vector3[][] grid;
+    private float[][] weights;
     private Vector3[][] vGrid;
     public Vector3[][] Grid { get { return grid; } }
     public int PatchCount
@@ -16,11 +17,12 @@ public class BezierSurface
     }
     public int patchCount = -1;
 
-    public BezierSurface(Vector3[][] grid)
+    public BezierSurface(Vector3[][] grid, float[][] weights = null)
     {
         this.grid = grid;
         SetUpVGrid();
         SetUpPatchCount();
+        SetUpWeights(weights);
     }
 
     //uses DeCasteljau Algorithm currently, so technically not bezier
@@ -29,7 +31,7 @@ public class BezierSurface
         Vector3[] loopPointsU = new Vector3[grid.Length];
         for (int i = 0; i < grid.Length; i++)
         {
-            loopPointsU[i] = DeCasteljauLoop(grid[i], UT, false);
+            loopPointsU[i] = DeCasteljauLoop(grid[i], UT, false, weights[i]);
         }
         return DeCasteljauLoop(loopPointsU, VT, false);
     }
@@ -49,7 +51,7 @@ public class BezierSurface
             loopPointsV[i] = DeCasteljauLoop(loop, VT, false);
         }
         Vector3 vTangent = DeCasteljauLoop(loopPointsU, VT, true);
-        Vector3 uTangent = -DeCasteljauLoop(loopPointsV, UT, true);
+        Vector3 uTangent = DeCasteljauLoop(loopPointsV, UT, true);
         return Vector3.Cross(vTangent, uTangent);
     }
 
@@ -75,7 +77,7 @@ public class BezierSurface
         return result;
     }
 
-    public void SetUpVGrid()
+    private void SetUpVGrid()
     {
         // makes grid from v alignment
         int maxVlength = 0;
@@ -92,7 +94,7 @@ public class BezierSurface
         {
             int loopLength = 0;
             // dry run for length of array
-            for (int j = 0; j < grid.Length; j++)
+            for (int j = grid.Length - 1; j > -1; j--)
             {
                 if (i < grid[j].Length)
                 {
@@ -102,7 +104,7 @@ public class BezierSurface
 
             Vector3[] loop = new Vector3[loopLength];
             int index = 0;
-            for (int j = 0; j < grid.Length; j++)
+            for (int j = grid.Length - 1; j > -1; j--)
             {
                 if (i < grid[j].Length)
                 {
@@ -112,10 +114,10 @@ public class BezierSurface
             }
             rows[i] = loop;
         }
-        vGrid = rows.Reverse().ToArray();
+        vGrid = rows;
     }
 
-    public void SetUpPatchCount()
+    private void SetUpPatchCount()
     {
         int count = 0;
         for (int i = 0; i < grid.Length - 1; i++)
@@ -139,6 +141,33 @@ public class BezierSurface
         patchCount = count;
     }
 
+    private void SetUpWeights(float[][] weights)
+    {
+        bool generateWeights = (weights == null);
+
+        this.weights = new float[grid.Length][];
+
+        for (int i = 0; i < grid.Length; i++)
+        {
+
+            this.weights[i] = new float[this.grid[i].Length];
+
+            for (int j = 0; j < grid[i].Length; j++)
+            {
+                if (generateWeights)
+                {
+                    this.weights[i][j] = 1f;
+                }
+
+                else
+                {
+                    this.weights[i][j] = weights[i][j];
+                }
+            }
+        }
+
+    }
+
     public Vector3 GetOnSurfaceControlPoint(int indexU, int indexV)
     {
         VerifyGridIndicesInRange(indexU, indexV);
@@ -153,7 +182,7 @@ public class BezierSurface
         grid[indexU][indexV] += (shift * (grid.Length - 1));
     }
 
-    private Vector3 DeCasteljauLoop(Vector3[] points, float percent, bool tangent)
+    private Vector3 DeCasteljauLoop(Vector3[] points, float percent, bool tangent, float[] weights = null)
     {
         if (points.Length == 1 && !tangent) return points[0];
         if (points.Length == 1 && tangent) throw new ArgumentException("Get not calculate tangent for loop of size 1!");
@@ -161,13 +190,28 @@ public class BezierSurface
         {
             return Vector3.Normalize(points[1] - points[0]);
         }
+        bool useWeights = (weights != null);
         // number of subdivisions decrease by one each loop
         Vector3[] loop = new Vector3[points.Length - 1];
+        float[] weightLoop = new float[points.Length - 1];
         for (int i = 0; i < points.Length - 1; i++)
         {
-            loop[i] = (Vector3.Lerp(points[i], points[i + 1], percent));
+            if (useWeights)
+            {
+                loop[i] = WeightedLerp(points[i], points[i + 1], percent, weights[i], weights[i + 1]);
+                weightLoop[i] = Mathf.Lerp(weights[i], weights[i + 1], percent);
+            }
+            else
+            {
+                loop[i] = WeightedLerp(points[i], points[i + 1], percent, 1, 1);
+            }
         }
-        if ((loop.Length > 1 && !tangent) || (loop.Length > 2 && tangent)) return DeCasteljauLoop(loop, percent, tangent);
+
+        if ((loop.Length > 1 && !tangent) || (loop.Length > 2 && tangent))
+        {
+            if (useWeights) return DeCasteljauLoop(loop, percent, tangent, weightLoop);
+            else return DeCasteljauLoop(loop, percent, tangent);
+        }
         else
         {
             if (tangent)
@@ -432,6 +476,16 @@ public class BezierSurface
             }
             return result;
         }
+    }
+
+    //clamped
+    public static Vector3 WeightedLerp(Vector3 a , Vector3 b, float t, float aWeight, float bWeight)
+    {
+        return new Vector3(
+               Mathf.Clamp(Mathf.Lerp(a.x * aWeight, b.x * bWeight, t) / ((aWeight + bWeight) / 2), a.x, b.x),
+               Mathf.Clamp(Mathf.Lerp(a.y * aWeight, b.y * bWeight, t) / ((aWeight + bWeight) / 2), a.y, b.y),
+               Mathf.Clamp(Mathf.Lerp(a.z * aWeight, b.z * bWeight, t) / ((aWeight + bWeight) / 2), a.z, b.z)
+            );
     }
 
     // todo to see if more efficent

@@ -29,7 +29,17 @@ public class SurfaceTile : MonoBehaviour
         points[0][2] = controlPoint7.transform.localPosition;
         points[1][2] = controlPoint8.transform.localPosition;
         points[2][2] = controlPoint9.transform.localPosition;
-        BezierSurface bezierSurface = new BezierSurface(points);
+        float[][] weights = new float[][] {new float[3], new float[3], new float[3]};
+        weights[0][0] = 1;
+        weights[1][0] = 1;
+        weights[2][0] = 1;
+        weights[0][1] = 1;
+        weights[1][1] = 1;
+        weights[2][1] = 1.4f;
+        weights[0][2] = 1;
+        weights[1][2] = 1;
+        weights[2][2] = 1;
+        BezierSurface bezierSurface = new BezierSurface(points, weights);
         surface = new Surface(bezierSurface, 0.2f);
         surfaceRenderer.surface = surface;
     }
