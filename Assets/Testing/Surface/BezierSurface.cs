@@ -198,12 +198,13 @@ public class BezierSurface
         {
             if (useWeights)
             {
-                loop[i] = WeightedLerp(points[i], points[i + 1], percent, weights[i], weights[i + 1]);
+                var shiftPercent = CalculateShiftWeight(weights[i], weights[i + 1], percent);
+                loop[i] = Vector3.Lerp(points[i], points[i + 1], shiftPercent);
                 weightLoop[i] = Mathf.Lerp(weights[i], weights[i + 1], percent);
             }
             else
             {
-                loop[i] = WeightedLerp(points[i], points[i + 1], percent, 1, 1);
+                loop[i] = Vector3.Lerp(points[i], points[i + 1], percent);
             }
         }
 
@@ -385,8 +386,8 @@ public class BezierSurface
             };
         }
 
-        float splitPointUT = Mathf.Lerp(UT1, UT2, 0.5f);
-        float splitPointVT = Mathf.Lerp(VT1, VT2, 0.5f);
+        float splitPointUT = SplitU(UT1, UT2);
+        float splitPointVT = SplitV(VT1, VT2);
         BezierSurfacePointData[] splitSegment1 = SplitSegment(UT1, VT1, splitPointUT, splitPointVT, resolution);
         BezierSurfacePointData[] splitSegment2 = SplitSegment(splitPointUT, splitPointVT, UT2, VT2, resolution);
         // combine arrays remove duplicate points
@@ -426,8 +427,8 @@ public class BezierSurface
             for (int i = 0; i < segmentLength; i++)
             {
                 int UVGroupIndex = i * 4;
-                float splitPointUT = Mathf.Lerp(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 2], 0.5f);
-                float splitPointVT = Mathf.Lerp(UVGroups[UVGroupIndex + 1], UVGroups[UVGroupIndex + 3], 0.5f);
+                float splitPointUT = SplitU(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 2]);
+                float splitPointVT = SplitV(UVGroups[UVGroupIndex + 1], UVGroups[UVGroupIndex + 3]);
                 nextUVGroupLeft[UVGroupIndex + 0] = UVGroups[UVGroupIndex + 0];
                 nextUVGroupLeft[UVGroupIndex + 1] = UVGroups[UVGroupIndex + 1];
                 nextUVGroupLeft[UVGroupIndex + 2] = splitPointUT;
@@ -478,14 +479,53 @@ public class BezierSurface
         }
     }
 
-    //clamped
-    public static Vector3 WeightedLerp(Vector3 a , Vector3 b, float t, float aWeight, float bWeight)
+    private float CalculateShiftWeight(float weight1, float weight2, float percent)
     {
-        return new Vector3(
-               Mathf.Clamp(Mathf.Lerp(a.x * aWeight, b.x * bWeight, t) / ((aWeight + bWeight) / 2), a.x, b.x),
-               Mathf.Clamp(Mathf.Lerp(a.y * aWeight, b.y * bWeight, t) / ((aWeight + bWeight) / 2), a.y, b.y),
-               Mathf.Clamp(Mathf.Lerp(a.z * aWeight, b.z * bWeight, t) / ((aWeight + bWeight) / 2), a.z, b.z)
-            );
+        var weight1Percent = 0f;
+        var lastNumber = percent;
+
+        var flooredWeight1 = Mathf.Floor(weight1);
+        for (int i = 1; i < flooredWeight1; i++)
+        {
+            var interpolationStepAmount = ((1f - percent) * lastNumber);
+            weight1Percent += interpolationStepAmount;
+            lastNumber = interpolationStepAmount;
+        }
+
+        if (weight1 - flooredWeight1 != 0)
+        {
+            var interpolationStepAmount = ((1f - percent) * lastNumber);
+            weight1Percent += interpolationStepAmount * (weight1 - flooredWeight1);
+        }
+
+        var weight2Percent = 0f;
+        lastNumber = percent;
+
+        var flooredWeight2 = Mathf.Floor(weight2);
+        for (int i = 1; i < flooredWeight2; i++)
+        {
+            var interpolationStepAmount = ((1f - percent) * lastNumber);
+            weight2Percent += interpolationStepAmount;
+            lastNumber = interpolationStepAmount;
+        }
+
+        if (weight2 - flooredWeight2 != 0)
+        {
+            var interpolationStepAmount = ((1f - percent) * lastNumber);
+            weight2Percent += interpolationStepAmount * (weight2 - flooredWeight2);
+        }
+
+        return percent + -weight1Percent + weight2Percent;
+    }
+
+    private float SplitU(float u1, float u2)
+    {
+        return Mathf.Lerp(u1, u2, 0.5f);
+    }
+
+    private float SplitV(float v1, float v2)
+    {
+        return Mathf.Lerp(v1, v2, 0.5f);
     }
 
     // todo to see if more efficent
