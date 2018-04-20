@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -51,58 +49,75 @@ public class Surface
     //un met assumption grid must at least by 3 by 3
     public List<Mesh> BuildMesh()
     {
-        BezierSurfacePointData[][][][] patchPointGroups = bezierSurface.SubDivideSurface(resolutionPerWorldUnit);
-        int meshIndex = 0;
-        for (int i = 0; i < patchPointGroups.Length; i++)
+        Color col = UnityEngine.Random.ColorHSV();
+        
+        PointData[][][][] test = bezierSurface.SubDivideSurface(resolutionPerWorldUnit);
+        for (int i = 0; i < test.Length; i++)
         {
-            for (int j = 0; j < patchPointGroups[i].Length; j++)
+            for (int j = 0; j < test[i].Length; j++)
             {
-                int vertCount = ((patchPointGroups[i][j].Length - 2) * (patchPointGroups[i][j][0].Length - 2));
-                Vector3[] verts = new Vector3[vertCount];
-                Vector3[] norms = new Vector3[vertCount];
-                Vector2[] uvs = new Vector2[vertCount];
-                int triangleCount = (patchPointGroups[i][j].Length - 3) * (patchPointGroups[i][j][0].Length - 3) * 6;
-                int[] triangles = new int[triangleCount];
-                int triangleIndex = 0;
-                for (int k = 1; k < patchPointGroups[i][j].Length - 1; k++)
+                for (int k = 0; k < test[i][j].Length; k++)
                 {
-                    for (int l = 1; l < patchPointGroups[i][j][k].Length - 1; l++)
+                    for (int l = 0; l < test[i][j][k].Length; l++)
                     {
-                        //set triangles for vert
-                        if (l != patchPointGroups[i][j][k].Length - 2 && (k != patchPointGroups[i][j].Length - 2))
-                        {
-                            int offsetPerL = patchPointGroups[i][j][k].Length - 2;
-                            int offset = ((k - 1) * offsetPerL);
-                            triangles[triangleIndex + 0] = offset + (l - 1);
-                            triangles[triangleIndex + 1] = offset + (1 * offsetPerL) + (l - 1);
-                            triangles[triangleIndex + 2] = offset + (1 * offsetPerL) + (l);
-
-                            triangles[triangleIndex + 3] = offset + (1 * offsetPerL) + (l);
-                            triangles[triangleIndex + 4] = offset + (l);
-                            triangles[triangleIndex + 5] = offset + (l - 1);
-                            triangleIndex += 6;
-                        }
-                        int vertIndex = ((k - 1) * (patchPointGroups[i][j][k].Length - 2)) + (l - 1);
-                        verts[vertIndex] = patchPointGroups[i][j][k][l].Point;
-                        norms[vertIndex] = patchPointGroups[i][j][k][l].Normal;
-                        uvs[vertIndex] = patchPointGroups[i][j][k][l].UVCoord;
-                        vertIndex++;
+                        Debug.DrawRay(test[i][j][k][l].Point, Vector3.up, col, 10f, true);
                     }
                 }
-                meshes[meshIndex].Clear();
-                meshes[meshIndex].vertices = verts;
-                meshes[meshIndex].triangles = triangles;
-                meshes[meshIndex].normals = norms;
-                meshes[meshIndex].uv = uvs;
-                meshes[meshIndex].RecalculateBounds();
-                SealSeams(patchPointGroups[i][j], i, j, meshIndex);
-                meshIndex += 5;
             }
         }
-        return meshes;
+        return new List<Mesh>();
+        //PointData[][][][] patchPointGroups = bezierSurface.SubDivideSurface(resolutionPerWorldUnit);
+        //int meshIndex = 0;
+        //for (int i = 0; i < patchPointGroups.Length; i++)
+        //{
+        //    for (int j = 0; j < patchPointGroups[i].Length; j++)
+        //    {
+        //        int vertCount = ((patchPointGroups[i][j].Length - 2) * (patchPointGroups[i][j][0].Length - 2));
+        //        Vector3[] verts = new Vector3[vertCount];
+        //        Vector3[] norms = new Vector3[vertCount];
+        //        Vector2[] uvs = new Vector2[vertCount];
+        //        int triangleCount = (patchPointGroups[i][j].Length - 3) * (patchPointGroups[i][j][0].Length - 3) * 6;
+        //        int[] triangles = new int[triangleCount];
+        //        int triangleIndex = 0;
+        //        for (int k = 1; k < patchPointGroups[i][j].Length - 1; k++)
+        //        {
+        //            for (int l = 1; l < patchPointGroups[i][j][k].Length - 1; l++)
+        //            {
+        //                //set triangles for vert
+        //                if (l != patchPointGroups[i][j][k].Length - 2 && (k != patchPointGroups[i][j].Length - 2))
+        //                {
+        //                    int offsetPerL = patchPointGroups[i][j][k].Length - 2;
+        //                    int offset = ((k - 1) * offsetPerL);
+        //                    triangles[triangleIndex + 0] = offset + (l - 1);
+        //                    triangles[triangleIndex + 1] = offset + (1 * offsetPerL) + (l - 1);
+        //                    triangles[triangleIndex + 2] = offset + (1 * offsetPerL) + (l);
+
+        //                    triangles[triangleIndex + 3] = offset + (1 * offsetPerL) + (l);
+        //                    triangles[triangleIndex + 4] = offset + (l);
+        //                    triangles[triangleIndex + 5] = offset + (l - 1);
+        //                    triangleIndex += 6;
+        //                }
+        //                int vertIndex = ((k - 1) * (patchPointGroups[i][j][k].Length - 2)) + (l - 1);
+        //                verts[vertIndex] = patchPointGroups[i][j][k][l].Point;
+        //                norms[vertIndex] = patchPointGroups[i][j][k][l].Normal;
+        //                uvs[vertIndex] = patchPointGroups[i][j][k][l].UVCoord;
+        //                vertIndex++;
+        //            }
+        //        }
+        //        meshes[meshIndex].Clear();
+        //        meshes[meshIndex].vertices = verts;
+        //        meshes[meshIndex].triangles = triangles;
+        //        meshes[meshIndex].normals = norms;
+        //        meshes[meshIndex].uv = uvs;
+        //        meshes[meshIndex].RecalculateBounds();
+        //        SealSeams(patchPointGroups[i][j], i, j, meshIndex);
+        //        meshIndex += 5;
+        //    }
+        //}
+        //return meshes;
     }
 
-    public void SealSeams(BezierSurfacePointData[][] controlGroup, int gridIIndex, int gridJIndex, int meshIndex)
+    public void SealSeams(PointData[][] controlGroup, int gridIIndex, int gridJIndex, int meshIndex)
     {
         var topSeamVertLoop =
             bezierSurface.SplitSegment(
@@ -135,8 +150,8 @@ public class Surface
 
         for (int i = 0; i < 4; i++)
         {
-            BezierSurfacePointData[] vertLoop;
-            BezierSurfacePointData[] mergeVertLoop;
+            PointData[] vertLoop;
+            PointData[] mergeVertLoop;
             bool useV = false;
             bool flipNormals = false;
             switch (i)
@@ -185,7 +200,7 @@ public class Surface
             int[] triangles = new int[triangleCount * 3];
 
             // remove tails
-            BezierSurfacePointData[] clippedEdge = new BezierSurfacePointData[mergeVertLoop.Length - 2];
+            PointData[] clippedEdge = new PointData[mergeVertLoop.Length - 2];
 
             bool[] clippedEdgeUsedFlags = new bool[clippedEdge.Length];
             for (int j = 0; j < clippedEdgeUsedFlags.Length; j++) { clippedEdgeUsedFlags[j] = false; }
@@ -297,7 +312,7 @@ public class Surface
     }
 
     // compares Uvs
-    private static int ClosestUV(BezierSurfacePointData[] seam, BezierSurfacePointData target, bool[] usedFlags, bool UseV = false)
+    private static int ClosestUV(PointData[] seam, PointData target, bool[] usedFlags, bool UseV = false)
     {
         // get first point to test
         int closestIndex = -1;

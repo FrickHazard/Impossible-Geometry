@@ -8,7 +8,6 @@ using UnityEngine;
 public class BezierSurface
 {
     private Vector3[][] grid;
-    private float[][] weights;
     private Vector3[][] vGrid;
     public Vector3[][] Grid { get { return grid; } }
     public int PatchCount
@@ -17,12 +16,11 @@ public class BezierSurface
     }
     public int patchCount = -1;
 
-    public BezierSurface(Vector3[][] grid, float[][] weights = null)
+    public BezierSurface(Vector3[][] grid)
     {
         this.grid = grid;
         SetUpVGrid();
         SetUpPatchCount();
-        SetUpWeights(weights);
     }
 
     //uses DeCasteljau Algorithm currently, so technically not bezier
@@ -31,7 +29,7 @@ public class BezierSurface
         Vector3[] loopPointsU = new Vector3[grid.Length];
         for (int i = 0; i < grid.Length; i++)
         {
-            loopPointsU[i] = DeCasteljauLoop(grid[i], UT, false, weights[i]);
+            loopPointsU[i] = DeCasteljauLoop(grid[i], UT, false);
         }
         return DeCasteljauLoop(loopPointsU, VT, false);
     }
@@ -141,33 +139,6 @@ public class BezierSurface
         patchCount = count;
     }
 
-    private void SetUpWeights(float[][] weights)
-    {
-        bool generateWeights = (weights == null);
-
-        this.weights = new float[grid.Length][];
-
-        for (int i = 0; i < grid.Length; i++)
-        {
-
-            this.weights[i] = new float[this.grid[i].Length];
-
-            for (int j = 0; j < grid[i].Length; j++)
-            {
-                if (generateWeights)
-                {
-                    this.weights[i][j] = 1f;
-                }
-
-                else
-                {
-                    this.weights[i][j] = weights[i][j];
-                }
-            }
-        }
-
-    }
-
     public Vector3 GetOnSurfaceControlPoint(int indexU, int indexV)
     {
         VerifyGridIndicesInRange(indexU, indexV);
@@ -182,7 +153,7 @@ public class BezierSurface
         grid[indexU][indexV] += (shift * (grid.Length - 1));
     }
 
-    private Vector3 DeCasteljauLoop(Vector3[] points, float percent, bool tangent, float[] weights = null)
+    private Vector3 DeCasteljauLoop(Vector3[] points, float percent, bool tangent)
     {
         if (points.Length == 1 && !tangent) return points[0];
         if (points.Length == 1 && tangent) throw new ArgumentException("Get not calculate tangent for loop of size 1!");
@@ -190,28 +161,17 @@ public class BezierSurface
         {
             return Vector3.Normalize(points[1] - points[0]);
         }
-        bool useWeights = (weights != null);
         // number of subdivisions decrease by one each loop
         Vector3[] loop = new Vector3[points.Length - 1];
-        float[] weightLoop = new float[points.Length - 1];
         for (int i = 0; i < points.Length - 1; i++)
         {
-            if (useWeights)
-            {
-                var shiftPercent = CalculateShiftWeight(weights[i], weights[i + 1], percent);
-                loop[i] = Vector3.Lerp(points[i], points[i + 1], shiftPercent);
-                weightLoop[i] = Mathf.Lerp(weights[i], weights[i + 1], percent);
-            }
-            else
-            {
-                loop[i] = Vector3.Lerp(points[i], points[i + 1], percent);
-            }
+
+            loop[i] = Vector3.Lerp(points[i], points[i + 1], percent);
         }
 
         if ((loop.Length > 1 && !tangent) || (loop.Length > 2 && tangent))
         {
-            if (useWeights) return DeCasteljauLoop(loop, percent, tangent, weightLoop);
-            else return DeCasteljauLoop(loop, percent, tangent);
+            return DeCasteljauLoop(loop, percent, tangent);
         }
         else
         {
@@ -239,10 +199,10 @@ public class BezierSurface
         return (float)indexV / (float)(grid[indexU].Length - 1);  
     }
 
-    public BezierSurfacePointData[][][][] SubDivideSurface(float resolution)
+    public PointData[][][][] SubDivideSurface(float resolution)
     {
         // result built from u perspective
-        BezierSurfacePointData[][][][] result = new BezierSurfacePointData[(grid.Length - 1)][][][];
+        PointData[][][][] result = new PointData[(grid.Length - 1)][][][];
         for (int i = 0; i < grid.Length - 1; i++)
         {
             int rowLength = grid[i].Length;
@@ -252,17 +212,17 @@ public class BezierSurface
             {
                 if (nextRowLength == 1)
                 {
-                    result[i] = new BezierSurfacePointData[0][][];
+                    result[i] = new PointData[0][][];
                     continue;
                 }
 
-                BezierSurfacePointData[][][] row = new BezierSurfacePointData[nextRowLength - 1][][];
+                PointData[][][] row = new PointData[nextRowLength - 1][][];
                 for (int j = 0; j < nextRowLength - 1; j++)
                 {
                     row[j] = SubDivideTriangle(
                         (float)(j + 1) / (float)(nextRowLength - 1), (float)(i + 1) / (float)(grid.Length - 1),
                         (float)j / (float)(nextRowLength - 1) , (float)(i + 1) / (float)(grid.Length - 1),
-                        0.5f, (float)(i) / (float)(grid.Length - 1),
+                        (float)(i) / (float)(grid.Length - 1),
                    resolution);
                 }
                 result[i] = row;
@@ -272,16 +232,16 @@ public class BezierSurface
             {
                 if (rowLength == 1)
                 {
-                    result[i] = new BezierSurfacePointData[0][][];
+                    result[i] = new PointData[0][][];
                     continue;
                 }
-                BezierSurfacePointData[][][] row = new BezierSurfacePointData[rowLength - 1][][];
+                PointData[][][] row = new PointData[rowLength - 1][][];
                 for (int j = 0; j < rowLength - 1; j++)
                 {
                     row[j] = SubDivideTriangle(
                         (float)(j) / (float)(rowLength - 1), (float)(i) / (float)(grid.Length - 1),
                         (float)(j + 1) / (float)(rowLength - 1), (float)(i) / (float)(grid.Length - 1),
-                        0.5f, (float)(i + 1) / (float)(grid.Length - 1),
+                        (float)(i + 1) / (float)(grid.Length - 1),
                    resolution);
                 }
                 result[i] = row;
@@ -289,7 +249,7 @@ public class BezierSurface
 
             else
             {
-                BezierSurfacePointData[][][] row = new BezierSurfacePointData[rowLength - 1][][];
+                PointData[][][] row = new PointData[rowLength - 1][][];
                 for (int j = 0; j < rowLength - 1; j++)
                 {
                     row[j] = SubDivideSquare(
@@ -308,7 +268,7 @@ public class BezierSurface
     }
 
     // builds a square from index forward one index an up one index
-    private BezierSurfacePointData[][] SubDivideSquare(float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4, float resolution)
+    private PointData[][] SubDivideSquare(float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4, float resolution)
     {
         // represents segments for every 4 floats.
         float[] segmentUVs = new float[8] {
@@ -324,7 +284,7 @@ public class BezierSurface
             v4,
         };
 
-        BezierSurfacePointData[][] upperAndLowerSegmentLoops = SplitSegmentsAndEnforceResolution(segmentUVs, resolution);
+        PointData[][] upperAndLowerSegmentLoops = SplitSegmentsAndEnforceResolution(segmentUVs, resolution);
 
         float[] secondUVGroup = new float[(upperAndLowerSegmentLoops[0].Length + upperAndLowerSegmentLoops[1].Length) * 2];
 
@@ -336,62 +296,91 @@ public class BezierSurface
             secondUVGroup[2 + (j * 4)] = upperAndLowerSegmentLoops[1][j].UVCoord.x;
             secondUVGroup[3 + (j * 4)] = upperAndLowerSegmentLoops[1][j].UVCoord.y;
         }
-        BezierSurfacePointData[][] result = SplitSegmentsAndEnforceResolution(secondUVGroup, resolution);
+        PointData[][] result = SplitSegmentsAndEnforceResolution(secondUVGroup, resolution);
         return result;
     }
 
-    private BezierSurfacePointData[][] SubDivideTriangle(float u1, float v1, float u2, float v2, float u3, float v3, float resolution)
+    // presumes building from u direction
+    private PointData[][] SubDivideTriangle(float u1, float v1, float u2, float v2, float v3, float resolution)
     {
+        PointData[][] result;
+
         // represents segments for every 4 floats.
-        float[] segmentUVs = new float[8] {
+        float[] segmentUVs = new float[12] {
             // triangle leg 1
             u1,
             v1,
-            u3,
+            u1,
             v3,
             // triangle leg 2
             u2,
             v2,
-            u3,
+            u2,
             v3,
+            // base 
+            u1,
+            v1,
+            u2,
+            v2,
         };
 
-        BezierSurfacePointData[][] upperAndLowerSegmentLoops = SplitSegmentsAndEnforceResolution(segmentUVs, resolution);
+        PointData[][] triangleEdges = SplitSegmentsAndEnforceResolution(segmentUVs, resolution);
 
-        float[] secondUVGroup = new float[(upperAndLowerSegmentLoops[0].Length + upperAndLowerSegmentLoops[1].Length) * 2];
-
-        // both arrays are same size
-        for (int j = 0; j < upperAndLowerSegmentLoops[0].Length; j++)
+        result = new PointData[triangleEdges[0].Length][];
+   
+        for (int i = 0; i < triangleEdges[0].Length; i++)
         {
-            secondUVGroup[0 + (j * 4)] = upperAndLowerSegmentLoops[0][j].UVCoord.x;
-            secondUVGroup[1 + (j * 4)] = upperAndLowerSegmentLoops[0][j].UVCoord.y;
-            secondUVGroup[2 + (j * 4)] = upperAndLowerSegmentLoops[1][j].UVCoord.x;
-            secondUVGroup[3 + (j * 4)] = upperAndLowerSegmentLoops[1][j].UVCoord.y;
+            
+            PointData[] row;
+            // head of triangle
+            if (i == 0)
+            {
+                row = new PointData[1] { triangleEdges[0][triangleEdges[0].Length - 1] };
+            }
+            else
+            {
+                PointData leftPoint = triangleEdges[0][(triangleEdges[0].Length - 1) - i];
+                PointData rightPoint = triangleEdges[1][(triangleEdges[1].Length - 1) - i];
+
+                int splitRowCount = i - 1;
+                row = new PointData[splitRowCount + 2];
+
+                row[0] = leftPoint;
+                for (int j = 0; j < splitRowCount; j++)
+                {
+                   float percent = (float)(j + 1) / (float)(splitRowCount + 1);
+                   row[j + 1] = new PointData();
+                   row[j + 1].Point = GetPoint(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), leftPoint.UVCoord.y);
+                   row[j + 1].Normal = GetNormal(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), leftPoint.UVCoord.y);
+                   row[j + 1].UVCoord = new Vector2(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), leftPoint.UVCoord.y);
+                }
+                row[row.Length - 1] = rightPoint;
+            }
+            result[i] = row;
         }
-        BezierSurfacePointData[][] result = SplitSegmentsAndEnforceResolution(secondUVGroup, resolution);
         return result;
     }
 
-    public BezierSurfacePointData[] SplitSegment(float UT1, float VT1, float UT2, float VT2, float resolution)
+    public PointData[] SplitSegment(float UT1, float VT1, float UT2, float VT2, float resolution)
     {
         Vector3 point1 = GetPoint(UT1, VT1);
         Vector3 point2 = GetPoint(UT2, VT2);
         float distance = Vector3.Distance(point1, point2);
         if (distance <= resolution)
         {
-            return new BezierSurfacePointData[]
+            return new PointData[]
             {
-                new BezierSurfacePointData(point1,new Vector2(UT1, VT1), GetNormal(UT1, VT1)),
-                new BezierSurfacePointData(point2, new Vector2(UT2, VT2), GetNormal(UT2, VT2))
+                new PointData(point1,new Vector2(UT1, VT1), GetNormal(UT1, VT1)),
+                new PointData(point2, new Vector2(UT2, VT2), GetNormal(UT2, VT2))
             };
         }
 
         float splitPointUT = SplitU(UT1, UT2);
         float splitPointVT = SplitV(VT1, VT2);
-        BezierSurfacePointData[] splitSegment1 = SplitSegment(UT1, VT1, splitPointUT, splitPointVT, resolution);
-        BezierSurfacePointData[] splitSegment2 = SplitSegment(splitPointUT, splitPointVT, UT2, VT2, resolution);
+        PointData[] splitSegment1 = SplitSegment(UT1, VT1, splitPointUT, splitPointVT, resolution);
+        PointData[] splitSegment2 = SplitSegment(splitPointUT, splitPointVT, UT2, VT2, resolution);
         // combine arrays remove duplicate points
-        BezierSurfacePointData[] combinedSegments = new BezierSurfacePointData[(splitSegment1.Length + splitSegment2.Length) - 1];
+        PointData[] combinedSegments = new PointData[(splitSegment1.Length + splitSegment2.Length) - 1];
         for (int i = 0; i < splitSegment1.Length; i++)
         {
             combinedSegments[i] = splitSegment1[i];
@@ -404,7 +393,7 @@ public class BezierSurface
     }
 
     //either do this or use binary tree ¯\_(ツ)_/¯, its confusing
-    private BezierSurfacePointData[][] SplitSegmentsAndEnforceResolution(float[] UVGroups, float resolution)
+    private PointData[][] SplitSegmentsAndEnforceResolution(float[] UVGroups, float resolution)
     {
         int segmentLength = UVGroups.Length / 4;
         bool subDivide = false;
@@ -439,12 +428,12 @@ public class BezierSurface
                 nextUVGroupRight[UVGroupIndex + 2] = UVGroups[UVGroupIndex + 2];
                 nextUVGroupRight[UVGroupIndex + 3] = UVGroups[UVGroupIndex + 3];
             }
-            BezierSurfacePointData[][] left = SplitSegmentsAndEnforceResolution(nextUVGroupLeft, resolution);
-            BezierSurfacePointData[][] right = SplitSegmentsAndEnforceResolution(nextUVGroupRight, resolution);
-            BezierSurfacePointData[][] result = new BezierSurfacePointData[segmentLength][];
+            PointData[][] left = SplitSegmentsAndEnforceResolution(nextUVGroupLeft, resolution);
+            PointData[][] right = SplitSegmentsAndEnforceResolution(nextUVGroupRight, resolution);
+            PointData[][] result = new PointData[segmentLength][];
             for (int i = 0; i < segmentLength; i++)
             {
-                result[i] = new BezierSurfacePointData[(left[i].Length + right[i].Length) - 1];
+                result[i] = new PointData[(left[i].Length + right[i].Length) - 1];
             }
 
             for (int i = 0; i < segmentLength; i++)
@@ -463,59 +452,20 @@ public class BezierSurface
         }
         else
         {
-            BezierSurfacePointData[][] result = new BezierSurfacePointData[segmentLength][];
+            PointData[][] result = new PointData[segmentLength][];
             for (int i = 0; i < segmentLength; i++)
             {
                 int UVGroupIndex = i * 4;
                 Vector3 point1 = GetPoint(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1]);
                 Vector3 point2 = GetPoint(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]);
-                result[i] = new BezierSurfacePointData[]
+                result[i] = new PointData[]
                 {
-                    new BezierSurfacePointData(point1, new Vector2(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1]), GetNormal(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1])),
-                    new BezierSurfacePointData(point2, new Vector2(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]), GetNormal(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]))
+                    new PointData(point1, new Vector2(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1]), GetNormal(UVGroups[UVGroupIndex + 0], UVGroups[UVGroupIndex + 1])),
+                    new PointData(point2, new Vector2(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]), GetNormal(UVGroups[UVGroupIndex + 2], UVGroups[UVGroupIndex + 3]))
                 };
             }
             return result;
         }
-    }
-
-    private float CalculateShiftWeight(float weight1, float weight2, float percent)
-    {
-        var weight1Percent = 0f;
-        var lastNumber = percent;
-
-        var flooredWeight1 = Mathf.Floor(weight1);
-        for (int i = 1; i < flooredWeight1; i++)
-        {
-            var interpolationStepAmount = ((1f - percent) * lastNumber);
-            weight1Percent += interpolationStepAmount;
-            lastNumber = interpolationStepAmount;
-        }
-
-        if (weight1 - flooredWeight1 != 0)
-        {
-            var interpolationStepAmount = ((1f - percent) * lastNumber);
-            weight1Percent += interpolationStepAmount * (weight1 - flooredWeight1);
-        }
-
-        var weight2Percent = 0f;
-        lastNumber = percent;
-
-        var flooredWeight2 = Mathf.Floor(weight2);
-        for (int i = 1; i < flooredWeight2; i++)
-        {
-            var interpolationStepAmount = ((1f - percent) * lastNumber);
-            weight2Percent += interpolationStepAmount;
-            lastNumber = interpolationStepAmount;
-        }
-
-        if (weight2 - flooredWeight2 != 0)
-        {
-            var interpolationStepAmount = ((1f - percent) * lastNumber);
-            weight2Percent += interpolationStepAmount * (weight2 - flooredWeight2);
-        }
-
-        return percent + -weight1Percent + weight2Percent;
     }
 
     private float SplitU(float u1, float u2)
@@ -526,6 +476,21 @@ public class BezierSurface
     private float SplitV(float v1, float v2)
     {
         return Mathf.Lerp(v1, v2, 0.5f);
+    }
+
+    public void DebugDraw(Color color, float duration)
+    {
+        const float stepCount = 200;
+        for (int i = 1; i <= stepCount; i++)
+        {
+            Vector3 prevPoint = GetPoint(i / stepCount, 0f);
+            for (int j = 1; j <= stepCount; j++)
+            {
+                Vector3 point = GetPoint(i / stepCount, j / stepCount);
+                Debug.DrawLine(prevPoint, point, color, duration);
+                prevPoint = point;
+            }
+        }
     }
 
     // todo to see if more efficent
@@ -557,24 +522,4 @@ public class BezierSurface
         }
         return result;
     }
-}
-
-public struct BezierSurfacePointData
-{
-    public Vector3 Point;
-    public Vector3 Normal;
-    public Vector2 UVCoord;
-
-    public BezierSurfacePointData(Vector3 point, Vector2 uVcoord, Vector3 normal)
-    {
-        Point = point;
-        UVCoord = uVcoord;
-        Normal = normal;
-    }
-}
-
-public enum BezierSurfaceType
-{
-    Square,
-    Triangle
 }

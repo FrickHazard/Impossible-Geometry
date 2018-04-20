@@ -49,7 +49,6 @@ public class BezierCurve
 
     public void DebugDraw(Color color, float duration)
     {
-        Debug.Log(GetPoint(0.5f));
         const float stepCount = 200;
         Vector3 prevPoint = GetPoint(0);
         for (int i = 1; i <= stepCount; i++)

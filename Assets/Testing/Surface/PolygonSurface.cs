@@ -21,7 +21,7 @@ public class PolygonSurface : MonoBehaviour
 	        direction = Quaternion.AngleAxis(360 / N, Vector3.up) * direction;
             Vector3 currentPoint = center + (direction * Size);
 	        bezierSurfaces[i] = BuildPolygonTriangle(prevPoint, currentPoint, center);
-	        prevPoint = currentPoint;
+            prevPoint = currentPoint;
             GameObject triangle = new GameObject("Triangle: " + i.ToString());
 	        renderers[i] = triangle.AddComponent<SurfaceRenderer>();
 	        renderers[i].material = material;
@@ -40,15 +40,7 @@ public class PolygonSurface : MonoBehaviour
         pointData[0] = new Vector3[]
         {
             leftPoint,
-            Vector3.Lerp(leftPoint, rightPoint, 0.33f),
-            Vector3.Lerp(leftPoint, rightPoint, 0.66f),
             rightPoint
-        };
-        pointData[0] = new Vector3[]
-        {
-            Vector3.Lerp(leftPoint, center, 0.5f),
-            //Vector3.Lerp(Vector3.Lerp(leftPoint, center, 0.5f), Vector3.Lerp(rightPoint, center, 0.5f), 0.5f),
-            Vector3.Lerp(rightPoint, center, 0.5f)
         };
         pointData[1] = new Vector3[] { center };
         return new BezierSurface(pointData);
