@@ -199,10 +199,10 @@ public class BezierSurface
         return (float)indexV / (float)(grid[indexU].Length - 1);  
     }
 
-    public PointData[][][][] SubDivideSurface(float resolution)
+    public BezierSurfaceControlPatch[][] SubDivideSurface(float resolution)
     {
         // result built from u perspective
-        PointData[][][][] result = new PointData[(grid.Length - 1)][][][];
+        BezierSurfaceControlPatch[][] result = new BezierSurfaceControlPatch[(grid.Length - 1)][];
         for (int i = 0; i < grid.Length - 1; i++)
         {
             int rowLength = grid[i].Length;
@@ -212,11 +212,11 @@ public class BezierSurface
             {
                 if (nextRowLength == 1)
                 {
-                    result[i] = new PointData[0][][];
+                    result[i] = new BezierSurfaceControlPatch[0];
                     continue;
                 }
 
-                PointData[][][] row = new PointData[nextRowLength - 1][][];
+                BezierSurfaceControlPatch[] row = new BezierSurfaceControlPatch[nextRowLength - 1];
                 for (int j = 0; j < nextRowLength - 1; j++)
                 {
                     row[j] = SubDivideTriangle(
@@ -232,10 +232,10 @@ public class BezierSurface
             {
                 if (rowLength == 1)
                 {
-                    result[i] = new PointData[0][][];
+                    result[i] = result[i] = new BezierSurfaceControlPatch[0];
                     continue;
                 }
-                PointData[][][] row = new PointData[rowLength - 1][][];
+                BezierSurfaceControlPatch[] row = new BezierSurfaceControlPatch[rowLength - 1];
                 for (int j = 0; j < rowLength - 1; j++)
                 {
                     row[j] = SubDivideTriangle(
@@ -249,7 +249,7 @@ public class BezierSurface
 
             else
             {
-                PointData[][][] row = new PointData[rowLength - 1][][];
+                BezierSurfaceControlPatch[] row = new BezierSurfaceControlPatch[rowLength - 1];
                 for (int j = 0; j < rowLength - 1; j++)
                 {
                     row[j] = SubDivideSquare(
@@ -268,7 +268,7 @@ public class BezierSurface
     }
 
     // builds a square from index forward one index an up one index
-    private PointData[][] SubDivideSquare(float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4, float resolution)
+    private BezierSurfaceControlPatch SubDivideSquare(float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4, float resolution)
     {
         // represents segments for every 4 floats.
         float[] segmentUVs = new float[8] {
@@ -296,14 +296,14 @@ public class BezierSurface
             secondUVGroup[2 + (j * 4)] = upperAndLowerSegmentLoops[1][j].UVCoord.x;
             secondUVGroup[3 + (j * 4)] = upperAndLowerSegmentLoops[1][j].UVCoord.y;
         }
-        PointData[][] result = SplitSegmentsAndEnforceResolution(secondUVGroup, resolution);
-        return result;
+        PointData[][] points = SplitSegmentsAndEnforceResolution(secondUVGroup, resolution);
+        return new BezierSurfaceControlPatch(points, ControlPatch.Square);
     }
 
     // presumes building from u direction
-    private PointData[][] SubDivideTriangle(float u1, float v1, float u2, float v2, float v3, float resolution)
+    private BezierSurfaceControlPatch SubDivideTriangle(float u1, float v1, float u2, float v2, float v3, float resolution)
     {
-        PointData[][] result;
+        BezierSurfaceControlPatch result;
 
         // represents segments for every 4 floats.
         float[] segmentUVs = new float[12] {
@@ -326,7 +326,7 @@ public class BezierSurface
 
         PointData[][] triangleEdges = SplitSegmentsAndEnforceResolution(segmentUVs, resolution);
 
-        result = new PointData[triangleEdges[0].Length][];
+        PointData[][] points = new PointData[triangleEdges[0].Length][];
    
         for (int i = 0; i < triangleEdges[0].Length; i++)
         {
@@ -356,9 +356,9 @@ public class BezierSurface
                 }
                 row[row.Length - 1] = rightPoint;
             }
-            result[i] = row;
+            points[i] = row;
         }
-        return result;
+        return new BezierSurfaceControlPatch(points, ControlPatch.Triangle);
     }
 
     public PointData[] SplitSegment(float UT1, float VT1, float UT2, float VT2, float resolution)
@@ -521,5 +521,23 @@ public class BezierSurface
             result.z += BezierStep(t, i, controlPoints[i].z, n);
         }
         return result;
+    }
+}
+
+public enum ControlPatch
+{
+    Triangle,
+    Square,
+}
+
+public struct BezierSurfaceControlPatch
+{
+    public PointData[][] pointData;
+    public ControlPatch controlPatchType;
+
+    public BezierSurfaceControlPatch(PointData[][] pointData, ControlPatch controlPatchType)
+    {
+        this.pointData = pointData;
+        this.controlPatchType = controlPatchType;
     }
 }
