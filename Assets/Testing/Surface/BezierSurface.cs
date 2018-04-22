@@ -303,7 +303,6 @@ public class BezierSurface
     // presumes building from u direction
     private BezierSurfaceControlPatch SubDivideTriangle(float u1, float v1, float u2, float v2, float v3, float resolution)
     {
-        BezierSurfaceControlPatch result;
 
         // represents segments for every 4 floats.
         float[] segmentUVs = new float[12] {
@@ -350,9 +349,9 @@ public class BezierSurface
                 {
                    float percent = (float)(j + 1) / (float)(splitRowCount + 1);
                    row[j + 1] = new PointData();
-                   row[j + 1].Point = GetPoint(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), leftPoint.UVCoord.y);
-                   row[j + 1].Normal = GetNormal(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), leftPoint.UVCoord.y);
-                   row[j + 1].UVCoord = new Vector2(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), leftPoint.UVCoord.y);
+                   row[j + 1].Point = GetPoint(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), Mathf.Lerp(leftPoint.UVCoord.y, rightPoint.UVCoord.y, percent));
+                   row[j + 1].Normal = GetNormal(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), Mathf.Lerp(leftPoint.UVCoord.y, rightPoint.UVCoord.y, percent));
+                   row[j + 1].UVCoord = new Vector2(Mathf.Lerp(leftPoint.UVCoord.x, rightPoint.UVCoord.x, percent), Mathf.Lerp(leftPoint.UVCoord.y, rightPoint.UVCoord.y, percent));
                 }
                 row[row.Length - 1] = rightPoint;
             }

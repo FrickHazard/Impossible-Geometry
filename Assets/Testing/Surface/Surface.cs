@@ -58,12 +58,12 @@ public class Surface
                 if (patchGroups[i][j].controlPatchType == ControlPatch.Square)
                 {
                     BuildSquarePatch(patchGroups[i][j], meshIndex);
-                    meshIndex++;
+                    meshIndex += 5;
                 }
                 else if (patchGroups[i][j].controlPatchType == ControlPatch.Triangle)
                 {
                     BuildTrianglePatch(patchGroups[i][j], meshIndex);
-                    meshIndex++;
+                    meshIndex += 5;
                 }
             }
         }
@@ -177,19 +177,19 @@ public class Surface
         meshes[meshIndex].normals = norms;
         meshes[meshIndex].uv = uvs;
         meshes[meshIndex].RecalculateBounds();
-        // SealSeams(patchPointGroups[i][j], i, j, meshIndex);
+        SealTriangleSeams(controlPatch, meshIndex);
     }
 
-    public Mesh SealTraingleSeams(BezierSurfaceControlPatch controlPatch)
+    public void SealTriangleSeams(BezierSurfaceControlPatch controlPatch, int meshIndex)
     {
         // edges for control patch
         var rightEdge = new PointData[controlPatch.pointData.Length];
-        var LeftEdge = new PointData[controlPatch.pointData.Length];
-        var bottomEdge = new PointData[controlPatch.pointData[controlPatch.pointData.Length -1].Length];
+        var leftEdge = new PointData[controlPatch.pointData.Length];
+        var bottomEdge = new PointData[controlPatch.pointData[controlPatch.pointData.Length - 1].Length];
 
         for (int i = 0; i < controlPatch.pointData.Length; i++)
         {
-            LeftEdge[i] = controlPatch.pointData[i][0];
+            leftEdge[i] = controlPatch.pointData[i][0];
             rightEdge[i] = controlPatch.pointData[i][controlPatch.pointData[i].Length - 1];
         }
         for (int i = 0; i < controlPatch.pointData[controlPatch.pointData.Length - 1].Length; i++)
@@ -198,16 +198,17 @@ public class Surface
         }
 
         // new edges with different resolution
+        // use u from base of triangle as, point of triangle technically has no U
         var rightSeam =
             bezierSurface.SplitSegment(
-                rightEdge[0].UVCoord.x, rightEdge[0].UVCoord.y,
-                rightEdge[rightEdge.Length - 1].UVCoord.x, rightEdge[rightEdge.Length - 1].UVCoord.y,
+               rightEdge[rightEdge.Length - 1].UVCoord.x, rightEdge[rightEdge.Length - 1].UVCoord.y,
+               rightEdge[rightEdge.Length - 1].UVCoord.x, rightEdge[0].UVCoord.y,
             resolutionPerWorldUnit);
 
-        var LeftSeam =
+        var leftSeam =
             bezierSurface.SplitSegment(
-                LeftEdge[0].UVCoord.x, LeftEdge[0].UVCoord.y,
-                LeftEdge[LeftEdge.Length - 1].UVCoord.x, LeftEdge[LeftEdge.Length - 1].UVCoord.y,
+                leftEdge[leftEdge.Length - 1].UVCoord.x, leftEdge[0].UVCoord.y,
+                leftEdge[leftEdge.Length - 1].UVCoord.x, leftEdge[leftEdge.Length - 1].UVCoord.y,
             resolutionPerWorldUnit);
 
         var bottomSeam =
@@ -216,206 +217,123 @@ public class Surface
                 bottomEdge[bottomEdge.Length - 1].UVCoord.x, bottomEdge[bottomEdge.Length - 1].UVCoord.y,
             resolutionPerWorldUnit);
 
-        for (int i = 0; i < rightEdge.Length - 1; i++)
+
+        for (int i = 0; i < bottomSeam.Length; i++)
         {
-
+            Debug.DrawRay(bottomSeam[i].Point, Vector3.up, Color.red, 10f);
         }
-        return new Mesh();
 
+        // vert loop behind edge to graft to
+        var leftGraft = new PointData[leftEdge.Length - 3];
+        var rightGraft = new PointData[rightEdge.Length - 3];
+        var bottomGraft = new PointData[bottomEdge.Length - 3];
+        for (int i = 2; i < controlPatch.pointData.Length - 1; i++)
+        {
+            leftGraft[i - 2] = controlPatch.pointData[i][1];
+            // reverse direction fir right
+            rightGraft[(rightEdge.Length - 4) - (i - 2)] = controlPatch.pointData[i][controlPatch.pointData[i].Length - 2];
+        }
+        for (int i = 1; i < controlPatch.pointData[controlPatch.pointData.Length - 2].Length - 1; i++)
+        {
+            bottomGraft[i - 1] = controlPatch.pointData[controlPatch.pointData.Length - 2][i];
+            Debug.DrawRay(bottomGraft[i - 1].Point, Vector3.up, Color.black, 10f);
+        }
+
+
+        MakeSeamMesh(leftGraft, leftSeam, true, (meshIndex * 5) + 1);
+        MakeSeamMesh(rightGraft, rightSeam, true, (meshIndex * 5) + 2);
+        MakeSeamMesh(bottomGraft, bottomSeam, false, (meshIndex * 5) + 3);
     }
 
-    public void SealSeams(PointData[][] controlGroup, int gridIIndex, int gridJIndex, int meshIndex)
+    public void MakeSeamMesh(PointData[] backEdge, PointData[] seam, bool useV, int meshIndex)
     {
-        var topSeamVertLoop =
-            bezierSurface.SplitSegment(
-                controlGroup[0][0].UVCoord.x, controlGroup[0][0].UVCoord.y,
-                controlGroup[controlGroup.Length - 1][0].UVCoord.x, controlGroup[controlGroup.Length - 1][0].UVCoord.y,
-            resolutionPerWorldUnit);
+        int triangleCount = (backEdge.Length + seam.Length) - 2;
+        int[] triangles = new int[triangleCount * 3];
 
-        var bottomSeamVertLoop =
-            bezierSurface.SplitSegment(
-                controlGroup[0][controlGroup[0].Length - 1].UVCoord.x, controlGroup[0][controlGroup[0].Length - 1].UVCoord.y,
-                controlGroup[controlGroup.Length - 1][controlGroup[0].Length - 1].UVCoord.x, controlGroup[controlGroup.Length - 1][controlGroup[0].Length - 1].UVCoord.y,
-            resolutionPerWorldUnit);
-
-        var leftSeamVertLoop =
-            bezierSurface.SplitSegment(
-                controlGroup[0][0].UVCoord.x, controlGroup[0][0].UVCoord.y,
-                controlGroup[0][controlGroup[0].Length - 1].UVCoord.x, controlGroup[0][controlGroup[0].Length - 1].UVCoord.y,
-            resolutionPerWorldUnit);
-
-        var rightSeamVertLoop =
-            bezierSurface.SplitSegment(
-                controlGroup[controlGroup.Length - 1][0].UVCoord.x, controlGroup[controlGroup.Length - 1][0].UVCoord.y,
-                controlGroup[controlGroup.Length - 1][controlGroup[0].Length - 1].UVCoord.x, controlGroup[controlGroup.Length - 1][controlGroup[0].Length - 1].UVCoord.y,
-            resolutionPerWorldUnit);
-
-        var topMergeVertLoop = GetCol(controlGroup, 1);
-        var bottomMergeVertLoop = GetCol(controlGroup, controlGroup[0].Length - 2);
-        var rightMergeVertLoop = GetRow(controlGroup, controlGroup.Length - 2);
-        var leftMergeVertLoop = GetRow(controlGroup, 1);
-
-        for (int i = 0; i < 4; i++)
+        int vertLength = backEdge.Length + seam.Length;
+        Vector3[] vertices = new Vector3[vertLength];
+        Vector3[] normals = new Vector3[vertLength];
+        Vector2[] uvs = new Vector2[vertLength];
+        for (int i = 0; i < vertLength; i++)
         {
-            PointData[] vertLoop;
-            PointData[] mergeVertLoop;
-            bool useV = false;
-            bool flipNormals = false;
-            switch (i)
+            if (i < seam.Length)
             {
-                // top
-                case 1:
-                    {
-                        mergeVertLoop = topMergeVertLoop;
-                        vertLoop = topSeamVertLoop;
-                        break;
-                    }
-                // left
-                case 2:
-                    {
-                        mergeVertLoop = leftMergeVertLoop;
-                        vertLoop = leftSeamVertLoop;
-                        useV = true;
-                        flipNormals = true;
-                        break;
-                    }
-                //right
-                case 3:
-                    {
-                        mergeVertLoop = rightMergeVertLoop;
-                        vertLoop = rightSeamVertLoop;
-                        useV = true;
-                        break;
-                    }
-                // default to bottom
-                default:
-                    {
-                        mergeVertLoop = bottomMergeVertLoop;
-                        vertLoop = bottomSeamVertLoop;
-                        flipNormals = true;
-                        break;
-                    }
-            }
-
-            // for triangles
-            if (Vector2.Distance(vertLoop[0].UVCoord, vertLoop[vertLoop.Length - 1].UVCoord) < 0.000000001)
-            {
-                return;
-            }
-
-            int triangleCount = (mergeVertLoop.Length + vertLoop.Length) - 4;
-            int[] triangles = new int[triangleCount * 3];
-
-            // remove tails
-            PointData[] clippedEdge = new PointData[mergeVertLoop.Length - 2];
-
-            bool[] clippedEdgeUsedFlags = new bool[clippedEdge.Length];
-            for (int j = 0; j < clippedEdgeUsedFlags.Length; j++) { clippedEdgeUsedFlags[j] = false; }
-
-            int[] clippedEdgeFirstConnectionIndices = new int[clippedEdge.Length];
-            for (int j = 0; j < clippedEdgeFirstConnectionIndices.Length; j++) { clippedEdgeFirstConnectionIndices[j] = -1; }
-
-            for (int j = 1; j < mergeVertLoop.Length - 1; j++)
-            {
-                clippedEdge[j - 1] = mergeVertLoop[j];
-            }
-
-            // set first triangle
-            if (flipNormals)
-            {
-                triangles[0] = vertLoop.Length;
-                triangles[1] = 1;
-                triangles[2] = 0;
+                vertices[i] = seam[i].Point;
+                normals[i] = seam[i].Normal;
+                uvs[i] = seam[i].UVCoord;
             }
             else
             {
-                triangles[0] = 0;
-                triangles[1] = 1;
-                triangles[2] = vertLoop.Length;
+                vertices[i] = backEdge[i - seam.Length].Point;
+                normals[i] = backEdge[i - seam.Length].Normal;
+                uvs[i] = backEdge[i - seam.Length].UVCoord;
             }
-            clippedEdgeUsedFlags[0] = true;
-            clippedEdgeFirstConnectionIndices[0] = 0;
-
-            // dont use previus used points when moving over
-            for (int j = 1; j < vertLoop.Length - 1; j++)
-            {
-                //var point1 = vertLoop[j];
-                var point2 = vertLoop[j + 1];
-                // find closest to point 2 that is at least as great as point 2
-                var point3Index = ClosestUV(clippedEdge, point2, clippedEdgeUsedFlags, useV);
-
-                if (flipNormals)
-                {
-                    triangles[(j * 3) + 2] = j;
-                    triangles[(j * 3) + 1] = j + 1;
-                    triangles[(j * 3) + 0] = vertLoop.Length + point3Index;
-                }
-                else
-                {
-                    triangles[(j * 3) + 0] = j;
-                    triangles[(j * 3) + 1] = j + 1;
-                    triangles[(j * 3) + 2] = vertLoop.Length + point3Index;
-                }
-
-                if (clippedEdgeFirstConnectionIndices[point3Index] == -1)
-                {
-                    clippedEdgeFirstConnectionIndices[point3Index] = j; //point 1 index
-                }
-            }
-
-            for (int j = clippedEdge.Length - 1; j > 0; j--)
-            {
-                // find closest to point 2 that is at least as great as point 2
-                if (flipNormals)
-                {
-                    triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 2] = vertLoop.Length + j;
-                    triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 1] = vertLoop.Length + (j - 1);
-                }
-                else
-                {
-                    triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 0] = vertLoop.Length + j;
-                    triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 1] = vertLoop.Length + (j - 1);
-                }
-                if (clippedEdgeFirstConnectionIndices[j] != -1)
-                {
-                    if (flipNormals)
-                    {
-                        triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 0] = clippedEdgeFirstConnectionIndices[j];
-                    }
-                    else
-                    {
-                        triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 2] = clippedEdgeFirstConnectionIndices[j];
-                    }
-                }
-                else
-                {
-                    // go back until a valid match is found
-                    int lastIndex = -1;
-                    for (int k = 0; k < ((clippedEdge.Length) - j); k++)
-                    {
-                        if (clippedEdgeFirstConnectionIndices[j + k] != -1)
-                        {
-                            lastIndex = clippedEdgeFirstConnectionIndices[j + k];
-                            break;
-                        }
-                    }
-                    if (flipNormals)
-                    {
-                        triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 0] = lastIndex;
-                    }
-                    else
-                    {
-                        triangles[((vertLoop.Length - 1) * 3) + (((clippedEdge.Length - 1) - j) * 3) + 2] = lastIndex;
-                    }
-                }
-            }
-            meshes[meshIndex + i + 1].Clear();
-            meshes[meshIndex + i + 1].vertices = vertLoop.Union(clippedEdge).Select(x => x.Point).ToArray();
-            meshes[meshIndex + i + 1].normals = vertLoop.Union(clippedEdge).Select(x => x.Normal).ToArray();
-            meshes[meshIndex + i + 1].triangles = triangles;
-            meshes[meshIndex + i + 1].uv = vertLoop.Union(clippedEdge).Select(x => x.UVCoord).ToArray();
-            meshes[meshIndex + i + 1].RecalculateBounds();
         }
+
+        bool[] usedFlags = new bool[backEdge.Length];
+        for (int j = 0; j < usedFlags.Length; j++) { usedFlags[j] = false; }
+
+        int[] edgeFirstConnectionIndices = new int[backEdge.Length];
+        for (int j = 0; j < edgeFirstConnectionIndices.Length; j++) { edgeFirstConnectionIndices[j] = -1; }
+
+        // first traingle
+        triangles[0] = seam.Length;
+        triangles[1] = 1;
+        triangles[2] = 0;
+
+        usedFlags[0] = true;
+        edgeFirstConnectionIndices[0] = 0;
+
+        // dont use previus used points when moving over
+        for (int i = 1; i < seam.Length - 1; i++)
+        {
+            var point2 = seam[i + 1];
+            // find closest to point 2 that is at least as great as point 2
+            var point3Index = ClosestUV(backEdge, point2, usedFlags, useV);
+
+            triangles[(i * 3) + 0] = seam.Length + point3Index;
+            triangles[(i * 3) + 1] = i + 1;
+            triangles[(i * 3) + 2] = i;
+
+            if (edgeFirstConnectionIndices[point3Index] == -1)
+            {
+                edgeFirstConnectionIndices[point3Index] = i; //point 1 index
+            }
+        }
+
+        for (int j = backEdge.Length - 1; j > 0; j--)
+        {
+            // iterate backwards over base row
+            int seamTrianglesShift = ((seam.Length - 1) * 3);
+            int backwardsShift = (((backEdge.Length - 1) - j) * 3);
+            triangles[seamTrianglesShift + backwardsShift + 1] = seam.Length + (j - 1);
+            triangles[seamTrianglesShift + backwardsShift + 2] = seam.Length + j;
+            if (edgeFirstConnectionIndices[j] != -1)
+            {
+                triangles[seamTrianglesShift + backwardsShift + 0] = edgeFirstConnectionIndices[j];
+            }
+            else
+            {
+                // go back until a valid match is found
+                int lastIndex = -1;
+                for (int k = 0; k < ((backEdge.Length) - j); k++)
+                {
+                    if (edgeFirstConnectionIndices[j + k] != -1)
+                    {
+                        lastIndex = edgeFirstConnectionIndices[j + k];
+                        break;
+                    }
+                }
+                triangles[seamTrianglesShift + backwardsShift + 0] = lastIndex;
+            }
+        }
+
+        meshes[meshIndex].Clear();
+        meshes[meshIndex].vertices = vertices;
+        meshes[meshIndex].normals = normals;
+        meshes[meshIndex].triangles = triangles;
+        meshes[meshIndex].uv = uvs;
+        meshes[meshIndex].RecalculateBounds();
     }
 
     // compares Uvs
@@ -473,29 +391,6 @@ public class Surface
             if (!usedFlags[i]) usedFlags[i] = true;
         }
         return closestIndex;
-    }
-
-    // presumes square jagged array
-    public static T[] GetCol<T>(T[][] matrix, int col)
-    {
-        var colLength = matrix.Length;
-        var colVector = new T[colLength];
-
-        for (var i = 0; i < colLength; i++)
-            colVector[i] = matrix[i][col];
-
-        return colVector;
-    }
-
-    public static T[] GetRow<T>(T[][] matrix, int row)
-    {
-        var rowLength = matrix[0].Length;
-        var rowVector = new T[rowLength];
-
-        for (var i = 0; i < rowLength; i++)
-            rowVector[i] = matrix[row][i];
-
-        return rowVector;
     }
 
 }
