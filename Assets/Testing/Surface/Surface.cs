@@ -110,7 +110,7 @@ public class Surface
         meshes[meshIndex].normals = norms;
         meshes[meshIndex].uv = uvs;
         meshes[meshIndex].RecalculateBounds();
-        // SealSeams(patchPointGroups[i][j], i, j, meshIndex);
+        SealSquareleSeams(controlPatch, meshIndex);
     }
 
     // minimum subdivsion of one, assumption
@@ -217,12 +217,6 @@ public class Surface
                 bottomEdge[bottomEdge.Length - 1].UVCoord.x, bottomEdge[bottomEdge.Length - 1].UVCoord.y,
             resolutionPerWorldUnit);
 
-
-        for (int i = 0; i < bottomSeam.Length; i++)
-        {
-            Debug.DrawRay(bottomSeam[i].Point, Vector3.up, Color.red, 10f);
-        }
-
         // vert loop behind edge to graft to
         var leftGraft = new PointData[leftEdge.Length - 3];
         var rightGraft = new PointData[rightEdge.Length - 3];
@@ -236,13 +230,77 @@ public class Surface
         for (int i = 1; i < controlPatch.pointData[controlPatch.pointData.Length - 2].Length - 1; i++)
         {
             bottomGraft[i - 1] = controlPatch.pointData[controlPatch.pointData.Length - 2][i];
-            Debug.DrawRay(bottomGraft[i - 1].Point, Vector3.up, Color.black, 10f);
+        }
+        MakeSeamMesh(leftGraft, leftSeam, true, meshIndex + 1);
+        MakeSeamMesh(rightGraft, rightSeam, true, meshIndex + 2);
+        MakeSeamMesh(bottomGraft, bottomSeam, false, meshIndex + 3);
+    }
+
+    public void SealSquareleSeams(BezierSurfaceControlPatch controlPatch, int meshIndex)
+    {
+        // edges for control patch
+        var topEdge = new PointData[controlPatch.pointData.Length];
+        var bottomEdge = new PointData[controlPatch.pointData.Length];
+        var rightEdge = new PointData[controlPatch.pointData[0].Length];
+        var leftEdge = new PointData[controlPatch.pointData[controlPatch.pointData.Length - 1].Length];
+
+        for (int i = 0; i < controlPatch.pointData.Length; i++)
+        {
+            bottomEdge[(bottomEdge.Length - 1) - i] = controlPatch.pointData[i][0];
+            topEdge[i] = controlPatch.pointData[i][controlPatch.pointData[i].Length - 1];
+        }
+        for (int i = 0; i < controlPatch.pointData[controlPatch.pointData.Length - 1].Length; i++)
+        {
+            leftEdge[(leftEdge.Length - 1) - i] = controlPatch.pointData[controlPatch.pointData.Length - 1][i];
+            rightEdge[i] = controlPatch.pointData[0][i];
         }
 
+        // new edges with different resolution
+        // use u from base of triangle as, point of triangle technically has no U
+        var topSeam =
+            bezierSurface.SplitSegment(
+               topEdge[0].UVCoord.x, topEdge[0].UVCoord.y,
+               topEdge[topEdge.Length - 1].UVCoord.x, topEdge[topEdge.Length - 1].UVCoord.y,
+            resolutionPerWorldUnit);
 
-        MakeSeamMesh(leftGraft, leftSeam, true, (meshIndex * 5) + 1);
-        MakeSeamMesh(rightGraft, rightSeam, true, (meshIndex * 5) + 2);
-        MakeSeamMesh(bottomGraft, bottomSeam, false, (meshIndex * 5) + 3);
+        var bottomSeam =
+            bezierSurface.SplitSegment(
+                bottomEdge[0].UVCoord.x, bottomEdge[0].UVCoord.y,
+                bottomEdge[bottomEdge.Length - 1].UVCoord.x, bottomEdge[bottomEdge.Length - 1].UVCoord.y,
+            resolutionPerWorldUnit);
+
+        var leftSeam =
+            bezierSurface.SplitSegment(
+                leftEdge[0].UVCoord.x, leftEdge[0].UVCoord.y,
+                leftEdge[leftEdge.Length - 1].UVCoord.x, leftEdge[leftEdge.Length - 1].UVCoord.y,
+            resolutionPerWorldUnit);
+
+        var rightSeam =
+          bezierSurface.SplitSegment(
+            rightEdge[0].UVCoord.x, rightEdge[0].UVCoord.y,
+            rightEdge[leftEdge.Length - 1].UVCoord.x, rightEdge[leftEdge.Length - 1].UVCoord.y,
+        resolutionPerWorldUnit);
+
+        // vert loop behind edge to graft to
+        var bottomGraft = new PointData[bottomEdge.Length - 2];
+        var topGraft = new PointData[topEdge.Length - 2];
+        var leftGraft = new PointData[leftEdge.Length - 2];
+        var rightGraft = new PointData[rightEdge.Length - 2];
+
+        for (int i = 1; i < controlPatch.pointData.Length - 1; i++)
+        {
+            bottomGraft[(bottomGraft.Length - 1) - (i - 1)] = controlPatch.pointData[i][1];
+            topGraft[i - 1] = controlPatch.pointData[i][controlPatch.pointData[i].Length - 2];
+        }
+        for (int i = 1; i < controlPatch.pointData[controlPatch.pointData.Length - 2].Length - 1; i++)
+        {
+            leftGraft[(leftGraft.Length - 1) - (i - 1)] = controlPatch.pointData[controlPatch.pointData.Length - 2][i];
+            rightGraft[i - 1] = controlPatch.pointData[1][i];
+        }
+        MakeSeamMesh(bottomGraft, bottomSeam, false, meshIndex + 1);
+        MakeSeamMesh(topGraft, topSeam, false, meshIndex + 4);
+        MakeSeamMesh(rightGraft, rightSeam, true, meshIndex + 2);
+        MakeSeamMesh(leftGraft, leftSeam, true, meshIndex + 3);
     }
 
     public void MakeSeamMesh(PointData[] backEdge, PointData[] seam, bool useV, int meshIndex)
@@ -393,4 +451,8 @@ public class Surface
         return closestIndex;
     }
 
+    private static Vector2 processUV(Vector2 uv, Vector2 distance)
+    {
+        return new Vector2(uv.x * distance.x, uv.y * distance.y);
+    }
 }
