@@ -63,6 +63,7 @@ public class BezierTriangle {
                 index++;
             }
         }
+
         return result;
     }
 
