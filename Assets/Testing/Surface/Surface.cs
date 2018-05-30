@@ -79,7 +79,7 @@ public class Surface
         int triangleCount = (controlPatch.pointData.Length - 3) * (controlPatch.pointData[0].Length - 3) * 6;
         int[] triangles = new int[triangleCount];
         int triangleIndex = 0;
-        int vertIndex = 0;
+        int vertIndex = 0;        
         for (int i = 1; i < controlPatch.pointData.Length - 1; i++)
         {
             for (int j = 1; j < controlPatch.pointData[i].Length - 1; j++)
@@ -101,6 +101,7 @@ public class Surface
                 verts[vertIndex] = controlPatch.pointData[i][j].Point;
                 norms[vertIndex] = controlPatch.pointData[i][j].Normal;
                 uvs[vertIndex] = controlPatch.pointData[i][j].UVCoord;
+
                 vertIndex++;
             }
         }

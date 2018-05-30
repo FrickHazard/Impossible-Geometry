@@ -21,92 +21,73 @@ public class UvAffineTestScript : MonoBehaviour
 
     void Update()
     {
+        makeGrid(3, 3);
+    }
 
 
-        PointData A = new PointData(
-            new Vector3(0f, 0f, 0f),
-            new Vector2(0.5f, 1f),
-            Vector3.up
-       );
+    public void makeGrid(int width, int height)
+    {
+        Vector3[] verts = new Vector3[(width + 1) * (height + 1)];
+        Vector2[] uvs = new Vector2[(width + 1) * (height + 1)];
+        Vector2[] uvs2 = new Vector2[(width + 1) * (height + 1)];
+        int[] triangles = new int[width * height * 2 * 3];
+        float baseDistance = 0f;
+        for (int i = 0; i < height + 1; i++)
+        {
+            float compareDistance = 0f;
+            for (int j = 0; j < width + 1; j++)
+            {
+                float modifier = (2f * ((float)(height - i) /  (float)height) * j * ((i % ((float)height / 2f)) * 0.3f));
+                verts[((width + 1) * i) + j] = new Vector3(j + modifier, 0, i);
+                if (i == 0 && j != 0)
+                {
+                    baseDistance += Vector3.Distance(verts[((width + 1) * i) + j], verts[((width + 1) * i) + (j - 1)]);
+                }
+                else if (j != 0)
+                {
+                    compareDistance += Vector3.Distance(verts[((width + 1) * i) + j], verts[((width + 1) * i) + (j - 1)]);
+                }
+            }
 
-        PointData B = new PointData(
-            new Vector3(1f + xOffset1, 0f, 1f),
-            new Vector2(0, 0.5f),
-            Vector3.up
-       );
+            float aspect = compareDistance / baseDistance;
 
-        PointData C = new PointData(
-           new Vector3(-1f - xOffset2, 0f, 1f),
-           new Vector2(1f, 0.5f),
-           Vector3.up
-      );
-
-
-        PointData D = new PointData(
-            new Vector3(2f + xOffset3, 0f, 2f),
-            new Vector2(0f, 0f),
-           Vector3.up
-       );
-
-        PointData E = new PointData(
-           new Vector3(0f, 0f, 2f),
-           new Vector2(0.5f, 0f),
-          Vector3.up
-      );
-
-        PointData F = new PointData(
-           new Vector3(-2f - xOffset4, 0f, 2f),
-           new Vector2(1f, 0f),
-          Vector3.up
-      );
-
-        float distance = Vector3.Distance(D.Point, E.Point) + Vector3.Distance(E.Point, F.Point);
-        float baseRatio1 = Vector3.Distance(D.Point, E.Point) * 2 / Vector3.Distance(B.Point, C.Point);
-        float baseRatio2 = Vector3.Distance(E.Point, F.Point) * 2 / Vector3.Distance(B.Point, C.Point);
-        float baseRatio3 = baseRatio1;
-
-
-        mesh.vertices = new Vector3[] {
-            A.Point,
-
-            B.Point,
-            C.Point,
-
-            D.Point,
-            E.Point,
-            F.Point,
-        };
-
-
-        mesh.uv = new Vector2[] {
-             new Vector2(A.UVCoord.x * 0, A.UVCoord.y),
-
-            new Vector2(B.UVCoord.x * 1f, B.UVCoord.y),
-            new Vector2(C.UVCoord.x * 1f, C.UVCoord.y),
-
-            new Vector2(D.UVCoord.x * baseRatio1, D.UVCoord.y),
-            new Vector2(E.UVCoord.x * baseRatio2, E.UVCoord.y),
-            new Vector2(F.UVCoord.x * baseRatio3, F.UVCoord.y),
-        };
-
-        mesh.uv2 = new Vector2[] {
-             new Vector2(0f, 1f),
-
-            new Vector2(1f, 1f),
-            new Vector2(1f, 1f),
-
-            new Vector2(baseRatio1, 1f),
-            new Vector2(baseRatio2, 1f),
-            new Vector2(baseRatio3, 1f),
-        };
+            for (int j = 0; j < width + 1; j++)
+            {
+                
+                if (i == 0)
+                {
+                    uvs[((width + 1) * i) + j] = new Vector2((float)j / (float)width, (float)i / (float)height);
+                    uvs2[((width + 1) * i) + j] = new Vector2(1f, 1f);
+                }
+                else
+                {
+                    uvs[((width + 1) * i) + j] = new Vector2(((float)j / (float)width) * aspect, (float)i / (float)height);
+                    uvs2[((width + 1) * i) + j] = new Vector2(aspect, 1f);
+                }
+               
+            }
+            
+            for (int j = 0; j < width; j++)
+            {
+                int jOffset = j * 6;
+                int iOffset = i * width * 6;
+                if (i < height)
+                {
+                    triangles[iOffset + jOffset + 2] = ((width + 1) * i) + j;
+                    triangles[iOffset + jOffset + 1] = ((width + 1) * i) + j + 1;
+                    triangles[iOffset + jOffset + 0] = ((width + 1) * i) + j + (width + 1);
+                    triangles[iOffset + jOffset + 5] = ((width + 1) * i) + j + 1;
+                    triangles[iOffset + jOffset + 4] = ((width + 1) * i) + j + (width + 2);
+                    triangles[iOffset + jOffset + 3] = ((width + 1) * i) + j + (width + 1);
+                }
+            }
+        }
+        mesh.Clear();
+        mesh.vertices = verts;
+        mesh.uv = uvs;
+        mesh.uv2 = uvs2;
+        mesh.triangles = triangles;
         mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-        mesh.triangles = new int[] {
-          0, 2, 1,
-          4, 3, 1,
-          1, 2, 4,
-          2, 5, 4,
-        };
         filter.mesh = mesh;
     }
 

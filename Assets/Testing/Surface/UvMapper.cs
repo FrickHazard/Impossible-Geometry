@@ -22,39 +22,45 @@ public static class AffineUvMapper
         return result;
     }
 
-    public static void CalculateSurfaceUvs(BezierSurfaceControlPatch controlPatch)
+    public static Vector4[][] CalculateSurfaceUvs(BezierSurfaceControlPatch controlPatch)
     {
         if (controlPatch.controlPatchType == ControlPatch.Square)
         {
-            float baseLength = 0f;
-            for (int i = 1; i < controlPatch.pointData[0].Length; i++)
+            var result = new Vector4[controlPatch.pointData.Length][];
+            float baseDistance = 0f;
+            for (int i = 1; i < controlPatch.pointData[1].Length; i++)
             {
-                baseLength += Vector3.Distance(controlPatch.pointData[0][i].Point, controlPatch.pointData[0][i - 1].Point);
+                baseDistance += Vector3.Distance(controlPatch.pointData[1][i].Point, controlPatch.pointData[1][i - 1].Point);
             }
             for (int i = 0; i < controlPatch.pointData.Length; i++)
             {
-                float[] xRatios = new float[controlPatch.pointData[i].Length];
+                result[i] = new Vector4[controlPatch.pointData[i].Length];
+                float compareDistance = 0f;
+                for (int j = 1; j < controlPatch.pointData[i].Length; j++)
+                {
+                    compareDistance += Vector3.Distance(controlPatch.pointData[i][j].Point, controlPatch.pointData[i][j - 1].Point);
+                }
+                float ratio = compareDistance / baseDistance;
                 for (int j = 0; j < controlPatch.pointData[i].Length; j++)
                 {
-                    var segmentRatio = 0f;
-                    if (j == 0)
-                    {
-                        segmentRatio = Vector3.Distance(controlPatch.pointData[i][j].Point, controlPatch.pointData[i][j + 1].Point) / baseLength;
-                        xRatios[i] = segmentRatio;
-                    }
-                    else
-                    {
-                        segmentRatio = Vector3.Distance(controlPatch.pointData[i][j].Point, controlPatch.pointData[i][j - 1].Point) / baseLength;
-                        xRatios[i] = segmentRatio;
-                        xRatios[i - 1] = Mathf.Lerp(segmentRatio, xRatios[i - 1], 0.5f);
-                    }
+                    result[i][j] = new Vector4(controlPatch.pointData[i][j].UVCoord.x * ratio, controlPatch.pointData[i][j].UVCoord.y, ratio, 1f);
                 }
             }
+            return result;
         }
 
-        if (controlPatch.controlPatchType == ControlPatch.Triangle)
+        else
         {
-
+            var result = new Vector4[controlPatch.pointData.Length][];
+            for (int i = 0; i < controlPatch.pointData.Length; i++)
+            {
+                result[i] = new Vector4[controlPatch.pointData[i].Length];
+                for (int j = 0; j < controlPatch.pointData[i].Length; j++)
+                {
+                    result[i][j] = new Vector4(controlPatch.pointData[i][j].UVCoord.x, controlPatch.pointData[i][j].UVCoord.y, 1f, 1f);
+                }
+            }
+            return result;
         }
     }
 
